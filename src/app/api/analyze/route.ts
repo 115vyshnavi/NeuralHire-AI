@@ -1,4 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
+import ZAI from 'z-ai-web-dev-sdk'
+
+async function getAIResponse(prompt: string, temperature = 0.7): Promise<string> {
+  try {
+    const zai = await ZAI.create()
+    const result = await zai.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      temperature,
+    })
+    return result.choices?.[0]?.message?.content || ''
+  } catch (error) {
+    console.error('AI SDK error:', error)
+    return ''
+  }
+}
+
+function extractJSON(text: string): Record<string, unknown> | null {
+  try {
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    return jsonMatch ? JSON.parse(jsonMatch[0]) : null
+  } catch {
+    return null
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,128 +31,137 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'video-analysis': {
-        const analysis = {
-          overallScore: 92,
-          categories: {
-            speechClarity: 94,
-            confidence: 88,
-            communication: 91,
-            enthusiasm: 85,
-            leadership: 79,
-            eyeContact: 90,
-            emotionalConsistency: 86,
-            adaptability: 82,
-          },
-          insights: [
-            {
-              title: 'Natural Communicator',
-              description: 'Demonstrates exceptional verbal clarity and structured thinking',
-              score: 94,
-            },
-            {
-              title: 'Confident Leader',
-              description: 'Shows strong leadership indicators with decisive communication patterns',
-              score: 88,
-            },
-            {
-              title: 'Emotionally Balanced',
-              description: 'Maintains emotional consistency with high adaptability under pressure',
-              score: 86,
-            },
-            {
-              title: 'Growth Mindset',
-              description: 'Exhibits curiosity and openness to learning and development',
-              score: 82,
-            },
-          ],
-          personalitySummary:
-            'The candidate exhibits strong communication skills with natural leadership potential. Their emotional balance and adaptability suggest readiness for challenging roles.',
+        const { name, role, skills, experience, bio } = data.profile || {}
+        const prompt = `You are an AI human intelligence analyst. Analyze this person's profile and generate a comprehensive video resume analysis with realistic scores.
+
+Person Profile:
+- Name: ${name || 'Unknown'}
+- Role: ${role || 'Unknown'}
+- Skills: ${skills?.join(', ') || 'None listed'}
+- Experience: ${experience || 'Unknown'}
+- Bio: ${bio || 'No bio provided'}
+
+Based on this profile, generate a realistic analysis as if they had submitted a video resume. Return ONLY valid JSON with this exact structure (no markdown, no code blocks):
+{
+  "overallScore": <number 60-98>,
+  "speechClarity": <number 55-98>,
+  "confidence": <number 50-96>,
+  "communication": <number 55-98>,
+  "enthusiasm": <number 50-95>,
+  "leadership": <number 45-95>,
+  "eyeContact": <number 50-97>,
+  "emotionalConsistency": <number 50-96>,
+  "adaptability": <number 50-95>,
+  "personalityInsights": [
+    {"title": "<string>", "description": "<string>", "score": <number 60-98>},
+    {"title": "<string>", "description": "<string>", "score": <number 60-98>},
+    {"title": "<string>", "description": "<string>", "score": <number 60-98>},
+    {"title": "<string>", "description": "<string>", "score": <number 60-98>}
+  ],
+  "personalitySummary": "<2-3 sentence summary>",
+  "communicationStyle": "<brief style description>",
+  "primaryTrait": "<main personality trait>"
+}`
+
+        const text = await getAIResponse(prompt, 0.7)
+        let analysis = extractJSON(text)
+
+        if (!analysis || typeof analysis.overallScore !== 'number') {
+          analysis = generateFallbackVideoAnalysis(data.profile)
         }
+
         return NextResponse.json({ success: true, analysis })
       }
 
       case 'personality-radar': {
-        const radar = {
-          dimensions: [
-            { name: 'Leadership', value: 85 },
-            { name: 'Confidence', value: 78 },
-            { name: 'Creativity', value: 92 },
-            { name: 'Emotional Intelligence', value: 88 },
-            { name: 'Adaptability', value: 80 },
-            { name: 'Collaboration', value: 75 },
-            { name: 'Pressure Handling', value: 82 },
-          ],
-          summary:
-            'The candidate exhibits a rare combination of creative innovation and emotional intelligence. Their leadership profile suggests natural authority balanced with empathy.',
+        const { profile, analysisData } = data || {}
+        const prompt = `You are an AI personality analyst. Based on this person's profile and analysis data, generate a detailed personality radar.
+
+Profile: ${JSON.stringify(profile || {})}
+Analysis Data: ${JSON.stringify(analysisData || {})}
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "personalityDimensions": {
+    "leadership": <number 40-98>,
+    "confidence": <number 40-98>,
+    "creativity": <number 40-98>,
+    "emotionalIntelligence": <number 40-98>,
+    "adaptability": <number 40-98>,
+    "collaboration": <number 40-98>,
+    "pressureHandling": <number 40-98>
+  }
+}`
+
+        const text = await getAIResponse(prompt, 0.6)
+        let radarData = extractJSON(text)
+
+        if (!radarData?.personalityDimensions) {
+          radarData = {
+            personalityDimensions: generateFallbackPersonalityDimensions(data.profile),
+          }
         }
-        return NextResponse.json({ success: true, radar })
+
+        return NextResponse.json({ success: true, radar: radarData })
       }
 
       case 'career-prediction': {
-        const predictions = {
-          careers: [
-            {
-              title: 'Chief Technology Officer',
-              match: 94,
-              description: 'Exceptional technical leadership combined with strategic vision',
-              strengths: ['Technical Vision', 'Strategic Thinking', 'Innovation'],
-              growth: '+28%',
-            },
-            {
-              title: 'Product Strategy Lead',
-              match: 89,
-              description: 'Strong innovation mindset with cross-functional collaboration skills',
-              strengths: ['Innovation', 'Collaboration', 'Strategy'],
-              growth: '+22%',
-            },
-            {
-              title: 'Startup Founder',
-              match: 87,
-              description: 'High risk tolerance with creative problem-solving and resilience',
-              strengths: ['Risk-Taking', 'Creativity', 'Resilience'],
-              growth: '+35%',
-            },
-          ],
-          leadership: {
-            score: 88,
-            dimensions: {
-              Vision: 90,
-              DecisionMaking: 85,
-              TeamBuilding: 82,
-              Communication: 92,
-              StrategicThinking: 88,
-            },
-          },
-          management: {
-            score: 82,
-            dimensions: {
-              TechnicalManagement: 88,
-              PeopleManagement: 78,
-              ProjectManagement: 85,
-              InnovationManagement: 91,
-            },
-          },
+        const { profile, analysisData } = data || {}
+        const prompt = `You are an AI career predictor. Based on this person's profile and analysis, predict career paths.
+
+Profile: ${JSON.stringify(profile || {})}
+Analysis Data: ${JSON.stringify(analysisData || {})}
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "careerPredictions": [
+    {"title": "<career title>", "match": <number 70-98>, "description": "<1 sentence>", "strengths": ["<strength1>", "<strength2>", "<strength3>"]},
+    {"title": "<career title>", "match": <number 65-95>, "description": "<1 sentence>", "strengths": ["<strength1>", "<strength2>", "<strength3>"]},
+    {"title": "<career title>", "match": <number 60-93>, "description": "<1 sentence>", "strengths": ["<strength1>", "<strength2>", "<strength3>"]}
+  ]
+}`
+
+        const text = await getAIResponse(prompt, 0.7)
+        let predictions = extractJSON(text)
+
+        if (!predictions?.careerPredictions) {
+          predictions = generateFallbackCareerPredictions(data.profile)
         }
+
         return NextResponse.json({ success: true, predictions })
       }
 
       case 'interview-analysis': {
-        const interview = {
-          confidence: 82,
-          communication: 88,
-          hesitation: 15,
-          sentiment: 'Positive',
-          emotionalTimeline: [
-            { phase: 'Introduction', confidence: 72, engagement: 65, stress: 30 },
-            { phase: 'Experience', confidence: 78, engagement: 70, stress: 45 },
-            { phase: 'Leadership', confidence: 85, engagement: 82, stress: 25 },
-            { phase: 'Problem-Solving', confidence: 80, engagement: 75, stress: 55 },
-            { phase: 'Creativity', confidence: 88, engagement: 90, stress: 20 },
-            { phase: 'Cultural Fit', confidence: 82, engagement: 85, stress: 35 },
-            { phase: 'Closing', confidence: 90, engagement: 88, stress: 15 },
-          ],
+        const { profile, messages, currentAnswer } = data || {}
+        const prompt = `You are an AI interview analyst. Analyze this interview response in context.
+
+Profile: ${JSON.stringify(profile || {})}
+Interview Messages So Far: ${JSON.stringify(messages?.slice(-6) || [])}
+Current Answer: ${currentAnswer || ''}
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "confidence": <number 50-98>,
+  "communication": <number 50-98>,
+  "hesitation": <number 5-40>,
+  "sentiment": "<Positive|Analytical|Engaged|Cautious>",
+  "nextQuestion": "<a relevant follow-up interview question>"
+}`
+
+        const text = await getAIResponse(prompt, 0.6)
+        let interviewAnalysis = extractJSON(text)
+
+        if (!interviewAnalysis || typeof interviewAnalysis.confidence !== 'number') {
+          interviewAnalysis = {
+            confidence: 72,
+            communication: 75,
+            hesitation: 18,
+            sentiment: 'Positive',
+            nextQuestion: 'Can you tell me about a time you had to adapt to a significant change at work?',
+          }
         }
-        return NextResponse.json({ success: true, interview })
+
+        return NextResponse.json({ success: true, interview: interviewAnalysis })
       }
 
       default:
@@ -138,9 +171,105 @@ export async function POST(request: NextRequest) {
         )
     }
   } catch (error) {
+    console.error('Analysis API error:', error)
     return NextResponse.json(
-      { success: false, error: 'Invalid request body' },
-      { status: 400 }
+      { success: false, error: 'Analysis request failed' },
+      { status: 500 }
     )
+  }
+}
+
+function generateFallbackPersonalityDimensions(profile: Record<string, unknown>) {
+  const skills = (profile?.skills as string[]) || []
+  const experience = (profile?.experience as string) || '0-2'
+  const expBonus = experience === '10+' ? 8 : experience === '6-10' ? 5 : experience === '3-5' ? 3 : 0
+  const skillBonus = Math.min(skills.length, 5)
+  const base = 65
+
+  return {
+    leadership: Math.min(95, base + expBonus + Math.floor(Math.random() * 10)),
+    confidence: Math.min(93, base + expBonus + Math.floor(Math.random() * 8)),
+    creativity: Math.min(96, base + skillBonus + Math.floor(Math.random() * 12)),
+    emotionalIntelligence: Math.min(94, base + Math.floor(Math.random() * 10)),
+    adaptability: Math.min(92, base + skillBonus + Math.floor(Math.random() * 8)),
+    collaboration: Math.min(90, base + Math.floor(Math.random() * 10)),
+    pressureHandling: Math.min(91, base + expBonus + Math.floor(Math.random() * 8)),
+  }
+}
+
+function generateFallbackVideoAnalysis(profile: Record<string, unknown>) {
+  const name = (profile?.name as string) || 'Candidate'
+  const skills = (profile?.skills as string[]) || []
+  const experience = (profile?.experience as string) || '0-2'
+
+  const expBonus = experience === '10+' ? 10 : experience === '6-10' ? 7 : experience === '3-5' ? 4 : 0
+  const skillBonus = Math.min(skills.length * 2, 10)
+
+  const base = 65
+  const overall = Math.min(98, base + expBonus + skillBonus + Math.floor(Math.random() * 8))
+
+  return {
+    overallScore: overall,
+    speechClarity: Math.min(98, base + expBonus + Math.floor(Math.random() * 15)),
+    confidence: Math.min(96, base + expBonus + Math.floor(Math.random() * 12)),
+    communication: Math.min(98, base + expBonus + skillBonus + Math.floor(Math.random() * 10)),
+    enthusiasm: Math.min(95, base + Math.floor(Math.random() * 15)),
+    leadership: Math.min(95, base + expBonus + Math.floor(Math.random() * 12)),
+    eyeContact: Math.min(97, base + Math.floor(Math.random() * 14)),
+    emotionalConsistency: Math.min(96, base + Math.floor(Math.random() * 12)),
+    adaptability: Math.min(95, base + skillBonus + Math.floor(Math.random() * 10)),
+    personalityInsights: [
+      {
+        title: 'Clear Communicator',
+        description: `${name} demonstrates structured thinking and clear articulation of ideas`,
+        score: Math.min(95, base + expBonus + Math.floor(Math.random() * 10)),
+      },
+      {
+        title: 'Adaptable Professional',
+        description: 'Shows flexibility and willingness to embrace new challenges',
+        score: Math.min(92, base + skillBonus + Math.floor(Math.random() * 10)),
+      },
+      {
+        title: 'Emotionally Balanced',
+        description: 'Maintains composure and demonstrates emotional awareness',
+        score: Math.min(90, base + Math.floor(Math.random() * 10)),
+      },
+      {
+        title: 'Growth Oriented',
+        description: 'Exhibits curiosity and commitment to continuous improvement',
+        score: Math.min(88, base + Math.floor(Math.random() * 10)),
+      },
+    ],
+    personalitySummary: `${name} presents a balanced professional profile with notable strengths in communication and adaptability. Their experience and skill set suggest strong potential for growth-oriented roles.`,
+    communicationStyle: 'Structured and articulate with a collaborative approach',
+    primaryTrait: 'Adaptable Communicator',
+  }
+}
+
+function generateFallbackCareerPredictions(profile: Record<string, unknown>) {
+  const role = (profile?.role as string) || 'Professional'
+  const skills = (profile?.skills as string[]) || []
+
+  return {
+    careerPredictions: [
+      {
+        title: `Senior ${role}`,
+        match: 88,
+        description: `Strong alignment with senior ${role.toLowerCase()} responsibilities based on current skill set`,
+        strengths: skills.length > 0 ? skills.slice(0, 3) : ['Leadership', 'Communication', 'Strategy'],
+      },
+      {
+        title: 'Team Lead',
+        match: 82,
+        description: 'Natural leadership qualities suited for team management roles',
+        strengths: ['Team Building', 'Mentoring', 'Project Management'],
+      },
+      {
+        title: 'Product Strategist',
+        match: 78,
+        description: 'Strategic thinking and analytical capabilities well-suited for product roles',
+        strengths: ['Strategic Planning', 'Data Analysis', 'Innovation'],
+      },
+    ],
   }
 }

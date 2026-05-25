@@ -378,16 +378,16 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             <MagneticButton
               variant="cyan"
               size="lg"
-              onClick={() => onNavigate('analyze')}
+              onClick={() => onNavigate('profile')}
             >
-              Analyze Candidate
+              Get Started
             </MagneticButton>
             <MagneticButton
               variant="violet"
               size="lg"
-              onClick={() => onNavigate('interview')}
+              onClick={() => onNavigate('analyze')}
             >
-              Experience NeuralHire AI
+              Explore Analysis
             </MagneticButton>
           </motion.div>
         </motion.div>
@@ -640,16 +640,16 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
             <MagneticButton
               variant="cyan"
               size="lg"
-              onClick={() => onNavigate('analyze')}
+              onClick={() => onNavigate('profile')}
             >
-              Start Analysis
+              Get Started
             </MagneticButton>
             <MagneticButton
               variant="violet"
               size="lg"
-              onClick={() => onNavigate('demo')}
+              onClick={() => onNavigate('command')}
             >
-              Book Demo
+              View Dashboard
             </MagneticButton>
           </motion.div>
 

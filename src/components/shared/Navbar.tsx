@@ -1,32 +1,35 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, Brain } from 'lucide-react';
+import React, { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Menu, X, Brain } from 'lucide-react'
+import { useUserStore } from '@/lib/user-store'
 
 interface NavbarProps {
-  activeSection: string;
-  onNavigate: (section: string) => void;
+  activeSection: string
+  onNavigate: (section: string) => void
 }
 
 const navLinks = [
   { id: 'home', label: 'Home' },
+  { id: 'profile', label: 'Profile' },
   { id: 'analyze', label: 'Analyze' },
   { id: 'personality', label: 'Personality' },
   { id: 'interview', label: 'Interview' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'predictions', label: 'Predictions' },
-  { id: 'command', label: 'Command Center' },
-  { id: 'profile', label: 'Profile' },
-];
+  { id: 'command', label: 'Command' },
+  { id: 'digital-profile', label: 'My Profile' },
+]
 
 export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { hasProfile } = useUserStore()
 
   const handleNavigate = (id: string) => {
-    onNavigate(id);
-    setMobileMenuOpen(false);
-  };
+    onNavigate(id)
+    setMobileMenuOpen(false)
+  }
 
   return (
     <>
@@ -42,17 +45,10 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
           boxShadow: '0 4px 30px rgba(0, 245, 255, 0.08), 0 1px 0 rgba(0, 245, 255, 0.1)',
         }}
       >
-        {/* Gradient bottom border */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-px"
-          style={{
-            background: 'linear-gradient(90deg, transparent, #00f5ff, #8b5cf6, transparent)',
-          }}
-        />
+        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #00f5ff, #8b5cf6, transparent)' }} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo */}
             <motion.div
               className="flex items-center gap-2 cursor-pointer"
               onClick={() => handleNavigate('home')}
@@ -72,8 +68,7 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
               </span>
             </motion.div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-1">
+            <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.id}
@@ -84,28 +79,19 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
               ))}
             </div>
 
-            {/* Mobile Hamburger */}
             <motion.button
-              className="md:hidden relative p-2 rounded-lg"
+              className="lg:hidden relative p-2 rounded-lg"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              style={{
-                background: 'rgba(0, 245, 255, 0.08)',
-                border: '1px solid rgba(0, 245, 255, 0.15)',
-              }}
+              style={{ background: 'rgba(0, 245, 255, 0.08)', border: '1px solid rgba(0, 245, 255, 0.15)' }}
             >
-              {mobileMenuOpen ? (
-                <X className="w-5 h-5 text-cyan-400" />
-              ) : (
-                <Menu className="w-5 h-5 text-cyan-400" />
-              )}
+              {mobileMenuOpen ? <X className="w-5 h-5 text-cyan-400" /> : <Menu className="w-5 h-5 text-cyan-400" />}
             </motion.button>
           </div>
         </div>
       </motion.nav>
 
-      {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -128,11 +114,10 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
                 border: '1px solid rgba(0, 245, 255, 0.15)',
-                boxShadow:
-                  '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 245, 255, 0.08)',
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 245, 255, 0.08)',
               }}
             >
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto">
                 {navLinks.map((link, index) => (
                   <motion.button
                     key={link.id}
@@ -141,25 +126,16 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
                     transition={{ delay: index * 0.05 }}
                     onClick={() => handleNavigate(link.id)}
                     className={`relative px-4 py-3 rounded-xl text-left text-sm font-medium transition-all duration-200 ${
-                      activeSection === link.id
-                        ? 'text-cyan-400'
-                        : 'text-gray-400 hover:text-white'
+                      activeSection === link.id ? 'text-cyan-400' : 'text-gray-400 hover:text-white'
                     }`}
-                    style={{
-                      background:
-                        activeSection === link.id
-                          ? 'rgba(0, 245, 255, 0.1)'
-                          : 'transparent',
-                    }}
+                    style={{ background: activeSection === link.id ? 'rgba(0, 245, 255, 0.1)' : 'transparent' }}
                   >
                     {link.label}
                     {activeSection === link.id && (
                       <motion.div
                         layoutId="mobile-active-indicator"
                         className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full bg-cyan-400"
-                        style={{
-                          boxShadow: '0 0 10px rgba(0, 245, 255, 0.5)',
-                        }}
+                        style={{ boxShadow: '0 0 10px rgba(0, 245, 255, 0.5)' }}
                       />
                     )}
                   </motion.button>
@@ -170,20 +146,20 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
         )}
       </AnimatePresence>
     </>
-  );
+  )
 }
 
 interface NavLinkProps {
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
+  label: string
+  isActive: boolean
+  onClick: () => void
 }
 
 function NavLink({ label, isActive, onClick }: NavLinkProps) {
   return (
     <motion.button
       onClick={onClick}
-      className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 rounded-lg ${
+      className={`relative px-2.5 py-2 text-xs font-medium transition-colors duration-200 rounded-lg ${
         isActive ? 'text-cyan-400' : 'text-gray-400 hover:text-white'
       }`}
       whileHover={{ y: -1 }}
@@ -194,14 +170,10 @@ function NavLink({ label, isActive, onClick }: NavLinkProps) {
         <motion.div
           layoutId="nav-active-underline"
           className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-3/4 rounded-full"
-          style={{
-            background: 'linear-gradient(90deg, #00f5ff, #8b5cf6)',
-            boxShadow: '0 0 8px rgba(0, 245, 255, 0.5)',
-          }}
+          style={{ background: 'linear-gradient(90deg, #00f5ff, #8b5cf6)', boxShadow: '0 0 8px rgba(0, 245, 255, 0.5)' }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         />
       )}
-      {/* Hover underline */}
       {!isActive && (
         <motion.div
           className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full bg-cyan-400"
@@ -212,5 +184,5 @@ function NavLink({ label, isActive, onClick }: NavLinkProps) {
         />
       )}
     </motion.button>
-  );
+  )
 }
