@@ -52,7 +52,7 @@ function SkillTag({ skill, onRemove }: { skill: string; onRemove: () => void }) 
 
 export default function CreateProfile() {
   const { profile, setProfile, setCurrentSection } = useUserStore()
-  const [isEditing, setIsEditing] = useState(!profile.createdAt)
+  const [isEditing, setIsEditing] = useState(!profile.isComplete)
   const [formData, setFormData] = useState({
     name: profile.name,
     email: profile.email,
@@ -99,7 +99,7 @@ export default function CreateProfile() {
       bio: formData.bio.trim(),
       skills,
       experience: formData.experience,
-      createdAt: true,
+      isComplete: true,
     })
     setIsEditing(false)
     setCurrentSection('analyze')
@@ -125,7 +125,7 @@ export default function CreateProfile() {
   })
 
   // Show existing profile view if profile exists and not editing
-  if (profile.createdAt && !isEditing) {
+  if (profile.isComplete && !isEditing) {
     return (
       <section className="relative py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">

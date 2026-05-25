@@ -14,6 +14,13 @@ const defaultGrowthInsights = [
   { title: 'Leadership: Emerging', description: 'Natural tendency to guide and mentor others', icon: TrendingUp, color: '#00f5ff' },
 ]
 
+function getGrowthFromMatch(match: number): string {
+  if (match >= 90) return '+35%'
+  if (match >= 80) return '+25%'
+  if (match >= 70) return '+18%'
+  return '+12%'
+}
+
 function hexToRgb(hex: string): string {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
   if (!result) return '0, 245, 255'
@@ -135,7 +142,7 @@ export default function CareerPrediction() {
           {predictions.map((career, index) => {
             const glowColor = careerColors[index % careerColors.length]
             const rgb = hexToRgb(glowColor)
-            const growth = `+${20 + Math.floor(Math.random() * 20)}%`
+            const growth = getGrowthFromMatch(career.match)
 
             return (
               <motion.div

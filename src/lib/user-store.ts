@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 export interface UserProfile {
   name: string
@@ -9,7 +10,7 @@ export interface UserProfile {
   skills: string[]
   experience: string
   avatarUrl: string | null
-  createdAt: boolean
+  isComplete: boolean
 }
 
 export interface AnalysisResults {
@@ -71,7 +72,7 @@ const defaultProfile: UserProfile = {
   skills: [],
   experience: '',
   avatarUrl: null,
-  createdAt: false,
+  isComplete: false,
 }
 
 const defaultAnalysis: AnalysisResults = {
@@ -95,14 +96,25 @@ const defaultAnalysis: AnalysisResults = {
   interviewMessages: [],
 }
 
-export const useUserStore = create<UserState>((set, get) => ({
-  profile: defaultProfile,
-  analysis: defaultAnalysis,
-  currentSection: 'home',
-  setProfile: (profile) => set((state) => ({ profile: { ...state.profile, ...profile } })),
-  setAnalysis: (analysis) => set((state) => ({ analysis: { ...state.analysis, ...analysis } })),
-  setCurrentSection: (section) => set({ currentSection: section }),
-  resetAnalysis: () => set({ analysis: defaultAnalysis }),
-  hasProfile: () => get().profile.createdAt,
-  hasAnalysis: () => get().analysis.overallScore !== null,
-}))
+export const useUserStore = create<UserState>()(
+  persist(
+    (set, get) => ({
+      profile: defaultProfile,
+      analysis: defaultAnalysis,
+      currentSection: 'home',
+      setProfile: (profile) => set((state) => ({ profile: { ...state.profile, ...profile } })),
+      setAnalysis: (analysis) => set((state) => ({ analysis: { ...state.analysis, ...analysis } })),
+      setCurrentSection: (section) => set({ currentSection: section }),
+      resetAnalysis: () => set({ analysis: defaultAnalysis }),
+      hasProfile: () => get().profile.isComplete,
+      hasAnalysis: () => get().analysis.overallScore !== null,
+    }),
+    {
+      name: 'neuralhire-ai-storage',
+      partialize: (state) => ({
+        profile: state.profile,
+        analysis: state.analysis,
+      }),
+    }
+  )
+)

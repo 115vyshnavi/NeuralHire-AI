@@ -115,7 +115,7 @@ export default function DigitalProfile() {
       title: 'Personality Summary',
       primaryTrait: analysis.primaryTrait || 'Analyzing...',
       description: analysis.personalitySummary || 'Complete a video analysis to generate your personality summary.',
-      tags: analysis.skills?.slice(0, 4) || ['Pending Analysis'],
+      tags: profile.skills.length > 0 ? profile.skills.slice(0, 4) : ['Pending Analysis'],
       icon: Brain,
       color: '#00f5ff',
       type: 'tags' as const,
@@ -143,9 +143,9 @@ export default function DigitalProfile() {
 
   intelligencePanels.push({
     title: 'Emotional Intelligence Profile',
-    primaryTrait: hasAnalysis ? 'Empathic Professional' : 'Awaiting Analysis',
+    primaryTrait: hasAnalysis ? `${analysis.enthusiasm || 0 > 75 ? 'Empathic' : 'Analytical'} Professional` : 'Awaiting Analysis',
     description: hasAnalysis
-      ? 'Demonstrates self-awareness and interpersonal sensitivity based on your analysis results.'
+      ? `Demonstrates self-awareness and interpersonal sensitivity based on your analysis results. Emotional consistency score: ${analysis.emotionalConsistency || 'N/A'}.`
       : 'Complete a video analysis to assess emotional intelligence.',
     metrics: hasAnalysis
       ? [
@@ -167,9 +167,9 @@ export default function DigitalProfile() {
 
   intelligencePanels.push({
     title: 'Work Behavior Analysis',
-    primaryTrait: hasAnalysis ? 'Growth-Oriented Achiever' : 'Awaiting Analysis',
+    primaryTrait: hasAnalysis ? `${analysis.leadership || 0 > 70 ? 'Growth-Oriented' : 'Steady'} Achiever` : 'Awaiting Analysis',
     description: hasAnalysis
-      ? 'Balances independent drive with collaborative instincts based on your profile.'
+      ? `Balances independent drive with collaborative instincts. Leadership score: ${analysis.leadership || 'N/A'}, Adaptability: ${analysis.adaptability || 'N/A'}.`
       : 'Complete a video analysis to assess work behavior.',
     tags: profile.skills.length > 0 ? profile.skills.slice(0, 4) : ['Pending Analysis'],
     icon: Briefcase,
@@ -177,10 +177,32 @@ export default function DigitalProfile() {
     type: 'tags' as const,
   })
 
+  // Build spectrums from actual analysis data when available
   const spectrums = [
-    { leftLabel: 'Independent', rightLabel: 'Collaborative', value: hasAnalysis ? 72 : 50, color: '#00f5ff' },
-    { leftLabel: 'Analytical', rightLabel: 'Creative', value: hasAnalysis ? 65 : 50, color: '#8b5cf6' },
-    { leftLabel: 'Reserved', rightLabel: 'Expressive', value: hasAnalysis ? 78 : 50, color: '#06b6d4' },
+    {
+      leftLabel: 'Independent',
+      rightLabel: 'Collaborative',
+      value: hasAnalysis && analysis.personalityDimensions
+        ? Math.round(analysis.personalityDimensions.collaboration)
+        : 50,
+      color: '#00f5ff',
+    },
+    {
+      leftLabel: 'Analytical',
+      rightLabel: 'Creative',
+      value: hasAnalysis && analysis.personalityDimensions
+        ? Math.round(analysis.personalityDimensions.creativity)
+        : 50,
+      color: '#8b5cf6',
+    },
+    {
+      leftLabel: 'Reserved',
+      rightLabel: 'Expressive',
+      value: hasAnalysis
+        ? Math.round((analysis.enthusiasm || 0 + analysis.communication || 0) / 2)
+        : 50,
+      color: '#06b6d4',
+    },
   ]
 
   return (

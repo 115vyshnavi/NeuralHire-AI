@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Navbar from '@/components/shared/Navbar'
 import NeuralBackground from '@/components/neural/NeuralBackground'
@@ -23,13 +23,6 @@ export default function Home() {
     setCurrentSection(section)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [setCurrentSection])
-
-  useEffect(() => {
-    document.body.style.overflowX = 'hidden'
-    return () => {
-      document.body.style.overflowX = ''
-    }
-  }, [])
 
   const renderSection = () => {
     switch (currentSection) {

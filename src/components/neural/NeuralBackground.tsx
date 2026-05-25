@@ -107,17 +107,20 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isMouseIn, setIsMouseIn] = useState(false);
 
-  // Generate floating orbs
+  // Generate floating orbs (reduced sizes for mobile)
   const orbs: FloatingOrb[] = [
-    { id: 0, color: ORB_COLORS[0], size: 500, top: '10%', left: '15%', animation: ORB_ANIMATIONS[0], duration: '20s', delay: '0s', blur: 80 },
-    { id: 1, color: ORB_COLORS[1], size: 400, top: '60%', left: '70%', animation: ORB_ANIMATIONS[1], duration: '25s', delay: '-5s', blur: 70 },
-    { id: 2, color: ORB_COLORS[2], size: 600, top: '40%', left: '40%', animation: ORB_ANIMATIONS[2], duration: '30s', delay: '-10s', blur: 90 },
-    { id: 3, color: ORB_COLORS[3], size: 300, top: '80%', left: '20%', animation: ORB_ANIMATIONS[0], duration: '22s', delay: '-3s', blur: 60 },
-    { id: 4, color: ORB_COLORS[4], size: 350, top: '20%', left: '80%', animation: ORB_ANIMATIONS[1], duration: '28s', delay: '-8s', blur: 65 },
+    { id: 0, color: ORB_COLORS[0], size: 300, top: '10%', left: '10%', animation: ORB_ANIMATIONS[0], duration: '20s', delay: '0s', blur: 80 },
+    { id: 1, color: ORB_COLORS[1], size: 250, top: '60%', left: '60%', animation: ORB_ANIMATIONS[1], duration: '25s', delay: '-5s', blur: 70 },
+    { id: 2, color: ORB_COLORS[2], size: 350, top: '40%', left: '30%', animation: ORB_ANIMATIONS[2], duration: '30s', delay: '-10s', blur: 90 },
+    { id: 3, color: ORB_COLORS[3], size: 200, top: '80%', left: '15%', animation: ORB_ANIMATIONS[0], duration: '22s', delay: '-3s', blur: 60 },
+    { id: 4, color: ORB_COLORS[4], size: 200, top: '20%', left: '70%', animation: ORB_ANIMATIONS[1], duration: '28s', delay: '-8s', blur: 65 },
   ];
 
+  // Reduce particles on mobile for performance
+  const particleCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 12 : 25;
+
   // Generate ambient floating particles
-  const particles = Array.from({ length: 30 }, (_, i) => ({
+  const particles = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
     size: Math.random() * 3 + 1,
@@ -212,10 +215,10 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
 
       {/* Mouse-reactive light effect */}
       <div
-        className="pointer-events-none absolute inset-0 transition-opacity duration-500"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-500 max-w-full"
         style={{
           opacity: isMouseIn ? 1 : 0,
-          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 245, 255, 0.06), transparent 40%)`,
+          background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 245, 255, 0.06), transparent 40%)`,
         }}
       />
 

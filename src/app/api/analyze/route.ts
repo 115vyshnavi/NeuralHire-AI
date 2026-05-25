@@ -131,6 +131,52 @@ Return ONLY valid JSON (no markdown, no code blocks):
         return NextResponse.json({ success: true, predictions })
       }
 
+      case 'emotional-timeline': {
+        const { profile, interviewMessages } = data || {}
+        const userMessages = (interviewMessages || []).filter((m: { role: string }) => m.role === 'user')
+        
+        if (userMessages.length === 0) {
+          return NextResponse.json({ success: true, timeline: [] })
+        }
+
+        const prompt = `You are an AI emotional intelligence analyst. Based on this person's profile and interview responses, generate an emotional timeline showing how their emotional state evolved during the interview.
+
+Profile: ${JSON.stringify(profile || {})}
+Interview Responses: ${JSON.stringify(userMessages.map((m: { text: string }) => m.text))}
+
+Return ONLY valid JSON (no markdown, no code blocks):
+{
+  "timeline": [
+    ${userMessages.map((_: unknown, i: number) => `{"phase": "<phase name like Introduction/Experience/Leadership/Problem-Solving/Creativity/Cultural Fit/Closing>", "confidence": <number 40-98>, "engagement": <number 40-98>, "stress": <number 5-60>}`).join(',\n    ')}
+  ]
+}
+
+Vary the scores realistically - confidence and engagement should generally increase as the interview progresses (but can dip), stress may spike during difficult questions then decrease. Make the data feel natural and human.`
+
+        const text = await getAIResponse(prompt, 0.7)
+        let timelineData = extractJSON(text)
+
+        if (!timelineData?.timeline || !Array.isArray(timelineData.timeline)) {
+          // Fallback: derive from analysis data
+          const analysisData = data?.analysisData || {}
+          const baseConf = analysisData.confidence || 70
+          const baseEng = analysisData.communication || 65
+          const baseStress = 100 - (analysisData.confidence || 70)
+          
+          const phaseNames = ['Introduction', 'Experience', 'Leadership', 'Problem-Solving', 'Creativity', 'Cultural Fit', 'Closing']
+          timelineData = {
+            timeline: userMessages.map((_: unknown, i: number) => ({
+              phase: phaseNames[i % phaseNames.length],
+              confidence: Math.min(98, Math.max(40, baseConf + (i * 2) - 5)),
+              engagement: Math.min(98, Math.max(40, baseEng + (i * 3) - 3)),
+              stress: Math.min(60, Math.max(5, baseStress - (i * 4) + 10)),
+            }))
+          }
+        }
+
+        return NextResponse.json({ success: true, timeline: timelineData.timeline })
+      }
+
       case 'interview-analysis': {
         const { profile, messages, currentAnswer } = data || {}
         const prompt = `You are an AI interview analyst. Analyze this interview response in context.
@@ -184,16 +230,17 @@ function generateFallbackPersonalityDimensions(profile: Record<string, unknown>)
   const experience = (profile?.experience as string) || '0-2'
   const expBonus = experience === '10+' ? 8 : experience === '6-10' ? 5 : experience === '3-5' ? 3 : 0
   const skillBonus = Math.min(skills.length, 5)
+  const nameHash = ((profile?.name as string) || '').split('').reduce((a: number, c: string) => a + c.charCodeAt(0), 0) % 10
   const base = 65
 
   return {
-    leadership: Math.min(95, base + expBonus + Math.floor(Math.random() * 10)),
-    confidence: Math.min(93, base + expBonus + Math.floor(Math.random() * 8)),
-    creativity: Math.min(96, base + skillBonus + Math.floor(Math.random() * 12)),
-    emotionalIntelligence: Math.min(94, base + Math.floor(Math.random() * 10)),
-    adaptability: Math.min(92, base + skillBonus + Math.floor(Math.random() * 8)),
-    collaboration: Math.min(90, base + Math.floor(Math.random() * 10)),
-    pressureHandling: Math.min(91, base + expBonus + Math.floor(Math.random() * 8)),
+    leadership: Math.min(95, base + expBonus + (nameHash % 7)),
+    confidence: Math.min(93, base + expBonus + (nameHash % 5)),
+    creativity: Math.min(96, base + skillBonus + (nameHash % 8)),
+    emotionalIntelligence: Math.min(94, base + (nameHash % 6)),
+    adaptability: Math.min(92, base + skillBonus + (nameHash % 5)),
+    collaboration: Math.min(90, base + (nameHash % 7)),
+    pressureHandling: Math.min(91, base + expBonus + (nameHash % 6)),
   }
 }
 
@@ -204,40 +251,43 @@ function generateFallbackVideoAnalysis(profile: Record<string, unknown>) {
 
   const expBonus = experience === '10+' ? 10 : experience === '6-10' ? 7 : experience === '3-5' ? 4 : 0
   const skillBonus = Math.min(skills.length * 2, 10)
+  // Deterministic hash from profile name for consistent scores
+  const nameHash = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0)
+  const variation = nameHash % 8
 
   const base = 65
-  const overall = Math.min(98, base + expBonus + skillBonus + Math.floor(Math.random() * 8))
+  const overall = Math.min(98, base + expBonus + skillBonus + variation)
 
   return {
     overallScore: overall,
-    speechClarity: Math.min(98, base + expBonus + Math.floor(Math.random() * 15)),
-    confidence: Math.min(96, base + expBonus + Math.floor(Math.random() * 12)),
-    communication: Math.min(98, base + expBonus + skillBonus + Math.floor(Math.random() * 10)),
-    enthusiasm: Math.min(95, base + Math.floor(Math.random() * 15)),
-    leadership: Math.min(95, base + expBonus + Math.floor(Math.random() * 12)),
-    eyeContact: Math.min(97, base + Math.floor(Math.random() * 14)),
-    emotionalConsistency: Math.min(96, base + Math.floor(Math.random() * 12)),
-    adaptability: Math.min(95, base + skillBonus + Math.floor(Math.random() * 10)),
+    speechClarity: Math.min(98, base + expBonus + (nameHash % 12)),
+    confidence: Math.min(96, base + expBonus + (nameHash % 10)),
+    communication: Math.min(98, base + expBonus + skillBonus + (nameHash % 8)),
+    enthusiasm: Math.min(95, base + (nameHash % 12)),
+    leadership: Math.min(95, base + expBonus + (nameHash % 10)),
+    eyeContact: Math.min(97, base + (nameHash % 11)),
+    emotionalConsistency: Math.min(96, base + (nameHash % 10)),
+    adaptability: Math.min(95, base + skillBonus + (nameHash % 8)),
     personalityInsights: [
       {
         title: 'Clear Communicator',
         description: `${name} demonstrates structured thinking and clear articulation of ideas`,
-        score: Math.min(95, base + expBonus + Math.floor(Math.random() * 10)),
+        score: Math.min(95, base + expBonus + (nameHash % 8)),
       },
       {
         title: 'Adaptable Professional',
         description: 'Shows flexibility and willingness to embrace new challenges',
-        score: Math.min(92, base + skillBonus + Math.floor(Math.random() * 10)),
+        score: Math.min(92, base + skillBonus + (nameHash % 8)),
       },
       {
         title: 'Emotionally Balanced',
         description: 'Maintains composure and demonstrates emotional awareness',
-        score: Math.min(90, base + Math.floor(Math.random() * 10)),
+        score: Math.min(90, base + (nameHash % 8)),
       },
       {
         title: 'Growth Oriented',
         description: 'Exhibits curiosity and commitment to continuous improvement',
-        score: Math.min(88, base + Math.floor(Math.random() * 10)),
+        score: Math.min(88, base + (nameHash % 7)),
       },
     ],
     personalitySummary: `${name} presents a balanced professional profile with notable strengths in communication and adaptability. Their experience and skill set suggest strong potential for growth-oriented roles.`,

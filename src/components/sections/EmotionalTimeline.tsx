@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import {
   AreaChart,
@@ -68,31 +68,70 @@ function CustomLegend({ payload }: { payload?: Array<{ value: string; color: str
   )
 }
 
-// Generate timeline data from interview messages
-function generateTimelineData(messages: Array<{ role: 'ai' | 'user'; text: string }>) {
+// Generate timeline data from interview messages via API analysis
+// This is now done via the API, but we keep a local fallback
+function generateLocalTimelineData(
+  messages: Array<{ role: 'ai' | 'user'; text: string }>,
+  analysis: { confidence?: number | null; communication?: number | null }
+) {
   const userMessages = messages.filter((m) => m.role === 'user')
   if (userMessages.length === 0) return []
 
   const phaseNames = ['Introduction', 'Experience', 'Leadership', 'Problem-Solving', 'Creativity', 'Cultural Fit', 'Closing']
+  const baseConf = analysis.confidence || 70
+  const baseEng = analysis.communication || 65
+  const baseStress = 100 - baseConf
 
-  return userMessages.map((msg, i) => {
-    const baseConf = 65 + Math.random() * 25
-    const baseEng = 60 + Math.random() * 30
-    const baseStress = 15 + Math.random() * 40
-    return {
-      phase: phaseNames[i % phaseNames.length],
-      confidence: Math.round(baseConf),
-      engagement: Math.round(baseEng),
-      stress: Math.round(baseStress),
-    }
-  })
+  return userMessages.map((_, i) => ({
+    phase: phaseNames[i % phaseNames.length],
+    confidence: Math.min(98, Math.max(40, baseConf + (i * 2) - 5)),
+    engagement: Math.min(98, Math.max(40, baseEng + (i * 3) - 3)),
+    stress: Math.min(60, Math.max(5, baseStress - (i * 4) + 10)),
+  }))
 }
 
 export default function EmotionalTimeline() {
-  const { analysis, hasProfile, setCurrentSection } = useUserStore()
+  const { profile, analysis, hasProfile, setAnalysis, setCurrentSection } = useUserStore()
+  const [timelineData, setTimelineData] = useState<Array<{ phase: string; confidence: number; engagement: number; stress: number }>>([])
+  const [loadingTimeline, setLoadingTimeline] = useState(false)
 
   const interviewMessages = analysis.interviewMessages || []
   const hasInterview = interviewMessages.length > 0 && interviewMessages.some((m) => m.role === 'user')
+
+  // Load timeline from API when component mounts with interview data
+  const handleLoadTimeline = async () => {
+    if (!hasInterview) return
+    setLoadingTimeline(true)
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'emotional-timeline',
+          data: { profile, interviewMessages, analysisData: analysis },
+        }),
+      })
+      const result = await res.json()
+      if (result.success && result.timeline && result.timeline.length > 0) {
+        setTimelineData(result.timeline)
+        return
+      }
+    } catch {
+      // fallback to local generation
+    }
+    // Local fallback
+    setTimelineData(generateLocalTimelineData(interviewMessages, analysis))
+    setLoadingTimeline(false)
+  }
+
+  // Auto-load timeline if interview data exists and no timeline yet
+  if (hasInterview && timelineData.length === 0 && !loadingTimeline) {
+    // Use local fallback immediately for responsive UX
+    const localData = generateLocalTimelineData(interviewMessages, analysis)
+    setTimelineData(localData)
+    // Then try API in background
+    handleLoadTimeline()
+  }
 
   if (!hasProfile()) {
     return (
@@ -132,9 +171,7 @@ export default function EmotionalTimeline() {
     )
   }
 
-  const timelineData = generateTimelineData(interviewMessages)
-
-  const keyMoments = [
+  const keyMoments = timelineData.length > 0 ? [
     {
       title: 'Peak Confidence',
       description: 'During your strongest response',
@@ -163,7 +200,7 @@ export default function EmotionalTimeline() {
       icon: RotateCcw,
       glowColor: '#00f5ff',
     },
-  ]
+  ] : []
 
   return (
     <section className="relative py-8 px-4 sm:px-6 lg:px-8">

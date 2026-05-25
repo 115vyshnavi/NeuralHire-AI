@@ -19,12 +19,17 @@ interface Particle {
 const CYAN = '#00f5ff';
 const VIOLET = '#6c63ff';
 const CONNECTION_DISTANCE = 120;
-const PARTICLE_COUNT = 150;
 const BASE_SPEED = 0.3;
 
+function getParticleCount(): number {
+  if (typeof window === 'undefined') return 60;
+  return window.innerWidth < 768 ? 40 : window.innerWidth < 1200 ? 80 : 120;
+}
+
 function createParticles(width: number, height: number): Particle[] {
+  const count = getParticleCount();
   const particles: Particle[] = [];
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
+  for (let i = 0; i < count; i++) {
     particles.push({
       x: Math.random() * width,
       y: Math.random() * height,
