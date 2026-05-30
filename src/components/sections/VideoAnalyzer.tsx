@@ -400,7 +400,7 @@ export default function VideoAnalyzer() {
                       background: 'linear-gradient(135deg, rgba(0, 245, 255, 0.03), rgba(255, 255, 255, 0.02), rgba(139, 92, 246, 0.02))',
                       backdropFilter: 'blur(20px)',
                       border: '2px dashed rgba(0, 245, 255, 0.3)',
-                      minHeight: '300px',
+                      minHeight: '220px',
                     }}
                     whileHover={{
                       borderColor: 'rgba(0, 245, 255, 0.7)',
@@ -416,7 +416,7 @@ export default function VideoAnalyzer() {
                       animate={{ borderColor: ['rgba(0, 245, 255, 0.15)', 'rgba(0, 245, 255, 0.4)', 'rgba(0, 245, 255, 0.15)'] }}
                       transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
                     />
-                    <div className="flex flex-col items-center justify-center p-8 sm:p-10 gap-5" style={{ minHeight: '300px' }}>
+                    <div className="flex flex-col items-center justify-center p-6 sm:p-10 gap-5" style={{ minHeight: '220px' }}>
                       <motion.div
                         className="p-5 rounded-2xl"
                         style={{
@@ -846,7 +846,7 @@ export default function VideoAnalyzer() {
                         transition={{ duration: 0.4, delay: i * 0.08 }}
                       >
                         <cat.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#00f5ff' }} />
-                        <span className="text-xs text-gray-400 w-20 sm:w-28 lg:w-32 flex-shrink-0 truncate">{cat.name}</span>
+                        <span className="text-[10px] sm:text-xs text-gray-400 w-16 sm:w-28 lg:w-32 flex-shrink-0 truncate">{cat.name}</span>
                         <div className="flex-1 h-1.5 rounded-full overflow-hidden min-w-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
                           <motion.div
                             className="h-full rounded-full"

@@ -892,6 +892,11 @@
 
 /* Mobile-specific performance: reduce blur on small screens */
 @media (max-width: 768px) {
+  body {
+    overflow-x: clip;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .glass, .glass-strong, .glass-card {
     backdrop-filter: blur(8px) saturate(120%);
     -webkit-backdrop-filter: blur(8px) saturate(120%);
@@ -905,11 +910,20 @@
     transform: none;
   }
   
-  /* Prevent horizontal overflow from any element */
-  .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl {
-    max-width: 100%;
-    padding-left: 4px;
-    padding-right: 4px;
+  /* Ensure all containers don't exceed viewport */
+  .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl, .max-w-2xl, .max-w-xl {
+    max-width: 100% !important;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* Fix Recharts overflow on mobile */
+  .recharts-wrapper {
+    overflow: visible !important;
+  }
+
+  .recharts-surface {
+    overflow: visible !important;
   }
   
   /* Make sure text doesn't overflow */
@@ -936,6 +950,14 @@
 @media (max-width: 380px) {
   html {
     font-size: 14px;
+  }
+
+  .text-3xl {
+    font-size: 1.5rem !important;
+  }
+
+  .text-4xl {
+    font-size: 1.75rem !important;
   }
 }
 

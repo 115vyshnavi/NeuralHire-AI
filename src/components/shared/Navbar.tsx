@@ -57,7 +57,7 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
         <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: 'linear-gradient(90deg, transparent, #00f5ff, #8b5cf6, transparent)' }} />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Logo */}
             <motion.div
               className="flex items-center gap-2 cursor-pointer"
@@ -66,7 +66,7 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
             >
               <Brain className="w-7 h-7 text-cyan-400" />
               <span
-                className="text-xl font-bold tracking-wider transition-all duration-300"
+                className="text-lg sm:text-xl font-bold tracking-wider transition-all duration-300"
                 style={{
                   background: 'linear-gradient(135deg, #00f5ff, #8b5cf6)',
                   WebkitBackgroundClip: 'text',
@@ -167,7 +167,7 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
                 boxShadow: '0 25px 50px rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 245, 255, 0.08)',
               }}
             >
-              <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto">
+              <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
                 {navLinks.map((link, index) => (
                   <motion.button
                     key={link.id}

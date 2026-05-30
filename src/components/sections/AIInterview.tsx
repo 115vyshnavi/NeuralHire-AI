@@ -478,7 +478,7 @@ export default function AIInterview() {
             </div>
 
             {/* Chat Messages */}
-            <div className="px-4 py-4 space-y-3 max-h-[50vh] sm:max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0, 245, 255, 0.15) transparent' }}>
+            <div className="px-4 py-4 space-y-3 max-h-[45vh] sm:max-h-[50vh] md:max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0, 245, 255, 0.15) transparent' }}>
               <AnimatePresence mode="popLayout">
                 {messages.map((msg, idx) => (
                   <motion.div
@@ -525,12 +525,12 @@ export default function AIInterview() {
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Type your response..."
                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-white/25 min-w-0"
-                  style={{ color: 'rgba(255,255,255,0.85)' }}
+                  style={{ color: 'rgba(255,255,255,0.85)', fontSize: '16px' }}
                   disabled={isTyping}
                 />
                 <motion.button
                   onClick={handleSend}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                  className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0"
                   style={{
                     background: inputValue.trim() ? 'linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(0, 245, 255, 0.08))' : 'rgba(0, 245, 255, 0.05)',
                     border: '1px solid rgba(0, 245, 255, 0.15)',

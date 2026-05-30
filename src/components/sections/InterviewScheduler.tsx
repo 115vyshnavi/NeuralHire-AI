@@ -167,7 +167,7 @@ export default function InterviewScheduler() {
           key={day}
           disabled={isPast}
           onClick={() => !isPast && setSelectedDay(day)}
-          className="relative w-full aspect-square rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200"
+          className="relative w-full aspect-square rounded-xl flex items-center justify-center text-sm font-medium transition-all duration-200 min-h-[40px]"
           style={{
             background: isSelected
               ? 'linear-gradient(135deg, rgba(0, 245, 255, 0.2), rgba(139, 92, 246, 0.15))'

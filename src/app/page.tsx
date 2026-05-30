@@ -62,7 +62,7 @@ export default function Home() {
     <NeuralBackground>
       <ParticleField className="fixed inset-0 pointer-events-none" />
       <Navbar activeSection={currentSection} onNavigate={handleNavigate} />
-      <main className="relative z-10 min-h-screen pt-16 overflow-x-hidden">
+      <main className="relative z-10 min-h-screen pt-14 sm:pt-16 overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentSection}
