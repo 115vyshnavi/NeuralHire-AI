@@ -478,7 +478,7 @@ export default function AIInterview() {
             </div>
 
             {/* Chat Messages */}
-            <div className="px-4 py-4 space-y-3 max-h-[350px] sm:max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0, 245, 255, 0.15) transparent' }}>
+            <div className="px-4 py-4 space-y-3 max-h-[50vh] sm:max-h-[400px] overflow-y-auto" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(0, 245, 255, 0.15) transparent' }}>
               <AnimatePresence mode="popLayout">
                 {messages.map((msg, idx) => (
                   <motion.div

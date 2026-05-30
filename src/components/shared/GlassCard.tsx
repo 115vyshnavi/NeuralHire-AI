@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
 interface GlassCardProps {
@@ -18,6 +18,17 @@ export default function GlassCard({
 }: GlassCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Disable tilt on mobile
+  const effectiveTilt = tiltEnabled && !isMobile;
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -32,7 +43,7 @@ export default function GlassCard({
   });
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!tiltEnabled || !ref.current) return;
+    if (!effectiveTilt || !ref.current) return;
 
     const rect = ref.current.getBoundingClientRect();
     const x = (e.clientX - rect.left) / rect.width - 0.5;
@@ -52,7 +63,6 @@ export default function GlassCard({
     mouseY.set(0);
   };
 
-  // Convert glow color to rgba with low opacity for border
   const glowColorRgb = hexToRgb(glowColor);
 
   return (
@@ -62,17 +72,16 @@ export default function GlassCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       style={{
-        rotateX: tiltEnabled ? rotateX : 0,
-        rotateY: tiltEnabled ? rotateY : 0,
+        rotateX: effectiveTilt ? rotateX : 0,
+        rotateY: effectiveTilt ? rotateY : 0,
         transformPerspective: 1000,
       }}
       className={`relative group ${className}`}
     >
-      {/* Glow border layer */}
       <motion.div
         className="absolute -inset-px rounded-2xl"
         animate={{
-          opacity: isHovered ? 1 : 0,
+          opacity: isHovered && !isMobile ? 1 : 0,
         }}
         transition={{ duration: 0.3 }}
         style={{
@@ -82,7 +91,6 @@ export default function GlassCard({
         }}
       />
 
-      {/* Main card */}
       <div
         className="relative rounded-2xl overflow-hidden"
         style={{
@@ -93,15 +101,12 @@ export default function GlassCard({
           boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2)',
         }}
       >
-        {/* Inner gradient overlay */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             background: `linear-gradient(180deg, rgba(${glowColorRgb}, 0.03) 0%, transparent 40%, transparent 70%, rgba(${glowColorRgb}, 0.02) 100%)`,
           }}
         />
-
-        {/* Content */}
         <div className="relative z-10">{children}</div>
       </div>
     </motion.div>

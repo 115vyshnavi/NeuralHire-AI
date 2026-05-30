@@ -389,3 +389,117 @@ Stage Summary:
 - API route updated with interview-start, nervousness fields, and domain detection
 - All lint checks pass (only pre-existing NeuralBackground.tsx error remains)
 - Dev server compiles successfully
+---
+Task ID: 2
+Agent: mobile-responsiveness-agent
+Task: Make NeuralHire AI platform fully mobile responsive
+
+Work Log:
+
+### File 1: /src/app/globals.css
+- Added mobile responsiveness overrides section at end of file
+- Safe area insets for notched phones (env(safe-area-inset-*))
+- Reduced motion support (prefers-reduced-motion: reduce)
+- Mobile-specific performance: reduced blur on glass effects for screens <768px
+- Disabled hover transforms on .glass-card:hover and .card-premium:hover for mobile
+- Prevented horizontal overflow from max-w-* containers on mobile
+- Text overflow protection with overflow-wrap: break-word
+- Reduced animation intensity on mobile (float, pulse, orbit)
+- Very small screen (<380px) font-size reduction to 14px
+- Touch target minimum 44px for buttons/links on coarse pointer devices
+
+### File 2: /src/components/neural/NeuralBackground.tsx
+- Added isMobile state with resize listener
+- Orb sizes now responsive: each orb has mobileSize and mobileBlur values (~50% of desktop)
+- Particle count reduced on mobile (10 vs 25)
+- Grid pattern size reduced on mobile (40px vs 60px)
+- Mouse/touch-reactive light effect radius reduced on mobile (200px vs 400px)
+- Added touch event support (touchmove, touchstart, touchend) for light effect
+- SVG noise overlay skipped on mobile for performance
+- Lint-compliant: uses init() function pattern for setState in effect
+
+### File 3: /src/components/neural/AIBrain.tsx
+- Added isMobile and mounted state with resize listener
+- On mobile (<768px), renders a 2D CSS fallback instead of WebGL Canvas
+- 2D fallback includes pulsing core with orbiting rings using existing animation classes
+- Desktop still uses full 3D WebGL brain with 60 nodes
+- Lint-compliant: uses init() function pattern for setState in effect
+
+### File 4: /src/components/neural/GlowingOrb.tsx
+- Added mobileSize prop (auto-calculated as 60% of desktop size if not provided)
+- Added isMobile state with resize listener
+- Uses currentSize (mobile or desktop) for width/height/boxShadow calculations
+- Simplified animation to only animate scale (removed animated boxShadow to reduce repaints)
+- Added maxWidth: '100%' to prevent overflow
+- Changed willChange from 'transform, box-shadow' to 'transform'
+
+### File 5: /src/components/shared/GlassCard.tsx
+- Added isMobile state with resize listener
+- Tilt effect disabled on mobile (effectiveTilt = tiltEnabled && !isMobile)
+- Hover glow border opacity animation disabled on mobile (isHovered && !isMobile)
+- Prevents janky 3D transforms on touch devices
+
+### File 6: /src/components/shared/MagneticButton.tsx
+- Added isTouchDevice detection using 'ontouchstart' in window || navigator.maxTouchPoints > 0
+- Magnetic spring effect disabled on touch devices (isTouchDevice ? 0 : springX/Y)
+- Hover glow shadow disabled on touch devices (isHovered && !isTouchDevice)
+- Added disabled prop support
+- Added minHeight: '44px' for touch target compliance
+- Uses setTimeout(fn, 0) pattern for touch detection to satisfy lint rule
+
+### File 7: /src/app/layout.tsx
+- Added Viewport import from next
+- Added viewport export with proper mobile configuration: width: 'device-width', initialScale: 1, maximumScale: 5, userScalable: true, viewportFit: 'cover'
+
+### File 8: /src/app/page.tsx
+- Added overflow-x-hidden to main element to prevent horizontal scroll
+
+### File 9: /src/components/sections/LandingPage.tsx
+- Added mobileSize prop to all GlowingOrb instances:
+  - Hero: 200→100, 180→90, 150→80, 120→60
+  - Features: 150→80, 130→70
+  - CTA: 180→90, 180→90, 250→120
+
+### File 10: /src/components/sections/VideoAnalyzer.tsx
+- Changed category score label width from w-24 sm:w-32 to w-20 sm:w-28 lg:w-32 for better mobile fit
+
+### File 11: /src/components/sections/AIInterview.tsx
+- Changed chat area max height from max-h-[350px] sm:max-h-[400px] to max-h-[50vh] sm:max-h-[400px] for better mobile viewport usage
+
+### File 12: /src/components/sections/CommandCenter.tsx
+- Changed score metrics grid from grid-cols-2 lg:grid-cols-4 to grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 for proper mobile stacking
+
+Stage Summary:
+- All 12 files modified for mobile responsiveness
+- Lint passes with zero errors
+- Dev server compiles successfully
+- Key improvements: 2D brain fallback on mobile, responsive orb sizes, disabled tilt/magnetic on touch, reduced particles/blur/animations, safe area insets, touch target compliance, viewport configuration
+
+---
+Task ID: 2
+Agent: Main Agent + Full-Stack Developer Subagent
+Task: Make NeuralHire AI platform fully mobile responsive
+
+Work Log:
+- Identified 12+ mobile responsiveness issues across the codebase
+- Fixed globals.css with mobile overrides (safe area insets, reduced blur, touch targets, animation reduction)
+- Fixed NeuralBackground.tsx with responsive orbs (50% smaller on mobile), fewer particles (10 vs 25), touch events, mobile grid size, skipped noise overlay on mobile
+- Fixed AIBrain.tsx with 2D CSS fallback on mobile instead of heavy WebGL 3D scene
+- Fixed GlowingOrb.tsx with mobileSize prop and responsive sizing
+- Fixed GlassCard.tsx - disabled tilt and hover glow on mobile
+- Fixed MagneticButton.tsx - disabled magnetic spring effect on touch devices, added 44px min-height, added disabled prop
+- Fixed LandingPage.tsx - added mobileSize props to all 8 GlowingOrb instances
+- Fixed VideoAnalyzer.tsx - responsive category label widths
+- Fixed AIInterview.tsx - chat area uses viewport height on mobile
+- Fixed CommandCenter.tsx - score metrics grid stacks on mobile
+- Fixed layout.tsx - added viewport export with device-width and viewportFit cover
+- Fixed page.tsx - added overflow-x-hidden to main element
+- Build verified successfully with zero errors
+
+Stage Summary:
+- All 12 files modified for mobile responsiveness
+- Performance: 3D brain replaced with 2D fallback on mobile, particles reduced, blur reduced
+- Touch: Added touch events for background light effect, disabled mouse-only effects on touch
+- Layout: All grids stack on mobile, proper padding, no horizontal overflow
+- Touch targets: 44px minimum for buttons, disabled hover transforms on touch
+- Safe area insets for notched phones

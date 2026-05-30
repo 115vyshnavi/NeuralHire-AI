@@ -867,3 +867,88 @@
   position: relative;
   z-index: 1;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS OVERRIDES
+   ============================================================ */
+
+/* Safe area insets for notched phones */
+@supports (padding: env(safe-area-inset-bottom)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile-specific performance: reduce blur on small screens */
+@media (max-width: 768px) {
+  .glass, .glass-strong, .glass-card {
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+  }
+  
+  .glass-card:hover {
+    transform: none;
+  }
+
+  .card-premium:hover {
+    transform: none;
+  }
+  
+  /* Prevent horizontal overflow from any element */
+  .max-w-7xl, .max-w-6xl, .max-w-5xl, .max-w-4xl, .max-w-3xl {
+    max-width: 100%;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  
+  /* Make sure text doesn't overflow */
+  h1, h2, h3, h4, h5, h6, p, span {
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+  
+  /* Reduce animation intensity on mobile */
+  .animate-float, .animate-float-slow, .animate-float-delayed {
+    animation-duration: 12s;
+  }
+  
+  .animate-ai-pulse, .animate-ai-pulse-violet {
+    animation-duration: 5s;
+  }
+  
+  .animate-orbit, .animate-orbit-reverse, .animate-orbit-slow {
+    animation-duration: 60s;
+  }
+}
+
+/* Very small screens */
+@media (max-width: 380px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+/* Touch target minimum size */
+@media (pointer: coarse) {
+  button, a, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Disable hover transform effects on touch */
+  .card-premium:hover,
+  .glass-card:hover {
+    transform: none;
+  }
+}

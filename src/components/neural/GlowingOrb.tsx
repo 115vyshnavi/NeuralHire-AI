@@ -1,20 +1,32 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface GlowingOrbProps {
   color?: string;
   size?: number;
+  mobileSize?: number;
   className?: string;
 }
 
 export default function GlowingOrb({
   color = '#00f5ff',
   size = 200,
+  mobileSize,
   className = '',
 }: GlowingOrbProps) {
-  // Parse hex color for rgba values
+  const [isMobile, setIsMobile] = useState(false);
+  const responsiveMobileSize = mobileSize || Math.round(size * 0.6);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const currentSize = isMobile ? responsiveMobileSize : size;
   const r = parseInt(color.slice(1, 3), 16);
   const g = parseInt(color.slice(3, 5), 16);
   const b = parseInt(color.slice(5, 7), 16);
@@ -23,24 +35,20 @@ export default function GlowingOrb({
     <motion.div
       className={`relative rounded-full ${className}`}
       style={{
-        width: size,
-        height: size,
+        width: currentSize,
+        height: currentSize,
+        maxWidth: '100%',
         background: `radial-gradient(circle at 35% 35%, rgba(${r}, ${g}, ${b}, 0.6) 0%, rgba(${r}, ${g}, ${b}, 0.2) 40%, rgba(${r}, ${g}, ${b}, 0.05) 70%, transparent 100%)`,
         boxShadow: `
-          0 0 ${size * 0.2}px rgba(${r}, ${g}, ${b}, 0.3),
-          0 0 ${size * 0.4}px rgba(${r}, ${g}, ${b}, 0.15),
-          0 0 ${size * 0.6}px rgba(${r}, ${g}, ${b}, 0.05),
-          inset 0 0 ${size * 0.15}px rgba(${r}, ${g}, ${b}, 0.2)
+          0 0 ${currentSize * 0.2}px rgba(${r}, ${g}, ${b}, 0.3),
+          0 0 ${currentSize * 0.4}px rgba(${r}, ${g}, ${b}, 0.15),
+          0 0 ${currentSize * 0.6}px rgba(${r}, ${g}, ${b}, 0.05),
+          inset 0 0 ${currentSize * 0.15}px rgba(${r}, ${g}, ${b}, 0.2)
         `,
-        willChange: 'transform, box-shadow',
+        willChange: 'transform',
       }}
       animate={{
-        scale: [1, 1.08, 1],
-        boxShadow: [
-          `0 0 ${size * 0.2}px rgba(${r}, ${g}, ${b}, 0.3), 0 0 ${size * 0.4}px rgba(${r}, ${g}, ${b}, 0.15), 0 0 ${size * 0.6}px rgba(${r}, ${g}, ${b}, 0.05), inset 0 0 ${size * 0.15}px rgba(${r}, ${g}, ${b}, 0.2)`,
-          `0 0 ${size * 0.3}px rgba(${r}, ${g}, ${b}, 0.5), 0 0 ${size * 0.5}px rgba(${r}, ${g}, ${b}, 0.25), 0 0 ${size * 0.8}px rgba(${r}, ${g}, ${b}, 0.1), inset 0 0 ${size * 0.2}px rgba(${r}, ${g}, ${b}, 0.3)`,
-          `0 0 ${size * 0.2}px rgba(${r}, ${g}, ${b}, 0.3), 0 0 ${size * 0.4}px rgba(${r}, ${g}, ${b}, 0.15), 0 0 ${size * 0.6}px rgba(${r}, ${g}, ${b}, 0.05), inset 0 0 ${size * 0.15}px rgba(${r}, ${g}, ${b}, 0.2)`,
-        ],
+        scale: [1, 1.06, 1],
       }}
       transition={{
         duration: 3,
@@ -49,7 +57,6 @@ export default function GlowingOrb({
         repeatType: 'loop',
       }}
     >
-      {/* Inner highlight */}
       <div
         className="absolute rounded-full"
         style={{

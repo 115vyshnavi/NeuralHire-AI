@@ -846,7 +846,7 @@ export default function VideoAnalyzer() {
                         transition={{ duration: 0.4, delay: i * 0.08 }}
                       >
                         <cat.icon className="w-3.5 h-3.5 flex-shrink-0" style={{ color: '#00f5ff' }} />
-                        <span className="text-xs text-gray-400 w-24 sm:w-32 flex-shrink-0 truncate">{cat.name}</span>
+                        <span className="text-xs text-gray-400 w-20 sm:w-28 lg:w-32 flex-shrink-0 truncate">{cat.name}</span>
                         <div className="flex-1 h-1.5 rounded-full overflow-hidden min-w-0" style={{ background: 'rgba(255,255,255,0.06)' }}>
                           <motion.div
                             className="h-full rounded-full"

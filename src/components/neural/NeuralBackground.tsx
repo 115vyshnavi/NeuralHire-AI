@@ -6,7 +6,6 @@ interface NeuralBackgroundProps {
   children: React.ReactNode;
 }
 
-// Keyframe styles for the floating orbs and particles
 const keyframeStyles = `
 @keyframes floatOrb1 {
   0%, 100% {
@@ -84,12 +83,14 @@ interface FloatingOrb {
   id: number;
   color: string;
   size: number;
+  mobileSize: number;
   top: string;
   left: string;
   animation: string;
   duration: string;
   delay: string;
   blur: number;
+  mobileBlur: number;
 }
 
 interface AmbientParticle {
@@ -103,16 +104,15 @@ interface AmbientParticle {
 }
 
 const ORB_COLORS = [
-  'rgba(0, 245, 255, 0.15)',  // cyan
-  'rgba(108, 99, 255, 0.15)', // violet
-  'rgba(20, 20, 60, 0.2)',    // midnight blue
-  'rgba(0, 245, 255, 0.1)',   // cyan lighter
-  'rgba(108, 99, 255, 0.1)',  // violet lighter
+  'rgba(0, 245, 255, 0.15)',
+  'rgba(108, 99, 255, 0.15)',
+  'rgba(20, 20, 60, 0.2)',
+  'rgba(0, 245, 255, 0.1)',
+  'rgba(108, 99, 255, 0.1)',
 ];
 
 const ORB_ANIMATIONS = ['floatOrb1', 'floatOrb2', 'floatOrb3'];
 
-// Deterministic pseudo-random using seed (avoids hydration mismatch)
 function seededRandom(seed: number): number {
   const x = Math.sin(seed * 9301 + 49297) * 233280;
   return x - Math.floor(x);
@@ -123,21 +123,18 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isMouseIn, setIsMouseIn] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // Generate floating orbs (static, deterministic — no hydration issue)
   const orbs: FloatingOrb[] = [
-    { id: 0, color: ORB_COLORS[0], size: 300, top: '10%', left: '10%', animation: ORB_ANIMATIONS[0], duration: '20s', delay: '0s', blur: 80 },
-    { id: 1, color: ORB_COLORS[1], size: 250, top: '60%', left: '60%', animation: ORB_ANIMATIONS[1], duration: '25s', delay: '-5s', blur: 70 },
-    { id: 2, color: ORB_COLORS[2], size: 350, top: '40%', left: '30%', animation: ORB_ANIMATIONS[2], duration: '30s', delay: '-10s', blur: 90 },
-    { id: 3, color: ORB_COLORS[3], size: 200, top: '80%', left: '15%', animation: ORB_ANIMATIONS[0], duration: '22s', delay: '-3s', blur: 60 },
-    { id: 4, color: ORB_COLORS[4], size: 200, top: '20%', left: '70%', animation: ORB_ANIMATIONS[1], duration: '28s', delay: '-8s', blur: 65 },
+    { id: 0, color: ORB_COLORS[0], size: 300, mobileSize: 150, top: '10%', left: '10%', animation: ORB_ANIMATIONS[0], duration: '20s', delay: '0s', blur: 80, mobileBlur: 40 },
+    { id: 1, color: ORB_COLORS[1], size: 250, mobileSize: 130, top: '60%', left: '60%', animation: ORB_ANIMATIONS[1], duration: '25s', delay: '-5s', blur: 70, mobileBlur: 35 },
+    { id: 2, color: ORB_COLORS[2], size: 350, mobileSize: 180, top: '40%', left: '30%', animation: ORB_ANIMATIONS[2], duration: '30s', delay: '-10s', blur: 90, mobileBlur: 45 },
+    { id: 3, color: ORB_COLORS[3], size: 200, mobileSize: 100, top: '80%', left: '15%', animation: ORB_ANIMATIONS[0], duration: '22s', delay: '-3s', blur: 60, mobileBlur: 30 },
+    { id: 4, color: ORB_COLORS[4], size: 200, mobileSize: 100, top: '20%', left: '70%', animation: ORB_ANIMATIONS[1], duration: '28s', delay: '-8s', blur: 65, mobileBlur: 30 },
   ];
 
-  // Use deterministic particle generation to avoid hydration mismatch
-  // After mount, we can adjust count based on actual screen size
-  const particleCount = 25;
+  const particleCount = isMobile ? 10 : 25;
 
-  // Generate ambient floating particles with deterministic positions
   const particles: AmbientParticle[] = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
     left: `${seededRandom(i * 7 + 1) * 100}%`,
@@ -149,7 +146,13 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
   }));
 
   useEffect(() => {
-    setMounted(true);
+    const init = () => {
+      setMounted(true);
+      setIsMobile(window.innerWidth < 768);
+    };
+    init();
+    window.addEventListener('resize', () => setIsMobile(window.innerWidth < 768));
+    return () => window.removeEventListener('resize', () => setIsMobile(window.innerWidth < 768));
   }, []);
 
   useEffect(() => {
@@ -163,14 +166,30 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
       }
     };
 
+    const handleTouchMove = (e: TouchEvent) => {
+      if (containerRef.current && e.touches[0]) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setMousePos({
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top,
+        });
+        setIsMouseIn(true);
+      }
+    };
+
     const handleMouseEnter = () => setIsMouseIn(true);
     const handleMouseLeave = () => setIsMouseIn(false);
+    const handleTouchStart = () => setIsMouseIn(true);
+    const handleTouchEnd = () => setIsMouseIn(false);
 
     const container = containerRef.current;
     if (container) {
       container.addEventListener('mousemove', handleMouseMove);
       container.addEventListener('mouseenter', handleMouseEnter);
       container.addEventListener('mouseleave', handleMouseLeave);
+      container.addEventListener('touchmove', handleTouchMove, { passive: true });
+      container.addEventListener('touchstart', handleTouchStart, { passive: true });
+      container.addEventListener('touchend', handleTouchEnd);
     }
 
     return () => {
@@ -178,6 +197,9 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
         container.removeEventListener('mousemove', handleMouseMove);
         container.removeEventListener('mouseenter', handleMouseEnter);
         container.removeEventListener('mouseleave', handleMouseLeave);
+        container.removeEventListener('touchmove', handleTouchMove);
+        container.removeEventListener('touchstart', handleTouchStart);
+        container.removeEventListener('touchend', handleTouchEnd);
       }
     };
   }, []);
@@ -188,7 +210,6 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
       className="relative min-h-screen w-full overflow-hidden"
       style={{ backgroundColor: '#0a0a1a' }}
     >
-      {/* Inject keyframe styles */}
       <style dangerouslySetInnerHTML={{ __html: keyframeStyles }} />
 
       {/* Base gradient layer */}
@@ -209,12 +230,12 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
           key={orb.id}
           className="pointer-events-none absolute rounded-full"
           style={{
-            width: orb.size,
-            height: orb.size,
+            width: isMobile ? orb.mobileSize : orb.size,
+            height: isMobile ? orb.mobileSize : orb.size,
             top: orb.top,
             left: orb.left,
             background: `radial-gradient(circle, ${orb.color} 0%, transparent 70%)`,
-            filter: `blur(${orb.blur}px)`,
+            filter: `blur(${isMobile ? orb.mobileBlur : orb.blur}px)`,
             animation: `${orb.animation} ${orb.duration} ease-in-out infinite`,
             animationDelay: orb.delay,
             willChange: 'transform',
@@ -230,18 +251,18 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
             linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
             linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px)
           `,
-          backgroundSize: '60px 60px',
+          backgroundSize: isMobile ? '40px 40px' : '60px 60px',
           animation: 'subtlePulse 8s ease-in-out infinite',
         }}
       />
 
-      {/* Mouse-reactive light effect — only after hydration to avoid mismatch */}
+      {/* Mouse/touch-reactive light effect */}
       {mounted && (
         <div
           className="pointer-events-none absolute inset-0 transition-opacity duration-500 max-w-full"
           style={{
             opacity: isMouseIn ? 1 : 0,
-            background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 245, 255, 0.06), transparent 40%)`,
+            background: `radial-gradient(${isMobile ? '200px' : '400px'} circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 245, 255, 0.06), transparent 40%)`,
           }}
         />
       )}
@@ -266,21 +287,23 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
         />
       ))}
 
-      {/* Noise texture overlay */}
-      <svg
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        style={{ opacity: 0.015 }}
-      >
-        <filter id="noiseFilter">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.65"
-            numOctaves="3"
-            stitchTiles="stitch"
-          />
-        </filter>
-        <rect width="100%" height="100%" filter="url(#noiseFilter)" />
-      </svg>
+      {/* Noise texture overlay - skip on mobile for performance */}
+      {!isMobile && (
+        <svg
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          style={{ opacity: 0.015 }}
+        >
+          <filter id="noiseFilter">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.65"
+              numOctaves="3"
+              stitchTiles="stitch"
+            />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+        </svg>
+      )}
 
       {/* Content layer */}
       <div className="relative z-10">

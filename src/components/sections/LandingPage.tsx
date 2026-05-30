@@ -301,16 +301,16 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
         {/* Floating gradient orbs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-20 -left-20 animate-float-slow">
-            <GlowingOrb color="#00f5ff" size={200} />
+            <GlowingOrb color="#00f5ff" size={200} mobileSize={100} />
           </div>
           <div className="absolute top-1/4 -right-16 animate-float-delayed">
-            <GlowingOrb color="#6c63ff" size={180} />
+            <GlowingOrb color="#6c63ff" size={180} mobileSize={90} />
           </div>
           <div className="absolute -bottom-20 left-1/3 animate-float">
-            <GlowingOrb color="#8b5cf6" size={150} />
+            <GlowingOrb color="#8b5cf6" size={150} mobileSize={80} />
           </div>
           <div className="absolute top-1/2 left-1/4 animate-float-slow">
-            <GlowingOrb color="#00f5ff" size={120} />
+            <GlowingOrb color="#00f5ff" size={120} mobileSize={60} />
           </div>
         </div>
 
@@ -424,10 +424,10 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
         {/* Background orbs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-1/4 right-0 animate-float-slow opacity-50">
-            <GlowingOrb color="#6c63ff" size={150} />
+            <GlowingOrb color="#6c63ff" size={150} mobileSize={80} />
           </div>
           <div className="absolute bottom-1/4 left-0 animate-float-delayed opacity-40">
-            <GlowingOrb color="#00f5ff" size={130} />
+            <GlowingOrb color="#00f5ff" size={130} mobileSize={70} />
           </div>
         </div>
 
@@ -599,13 +599,13 @@ export default function LandingPage({ onNavigate }: LandingPageProps) {
         {/* Background orbs */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute top-0 left-1/4 animate-float opacity-40">
-            <GlowingOrb color="#00f5ff" size={180} />
+            <GlowingOrb color="#00f5ff" size={180} mobileSize={90} />
           </div>
           <div className="absolute bottom-0 right-1/4 animate-float-delayed opacity-40">
-            <GlowingOrb color="#6c63ff" size={180} />
+            <GlowingOrb color="#6c63ff" size={180} mobileSize={90} />
           </div>
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-float-slow opacity-20">
-            <GlowingOrb color="#8b5cf6" size={250} />
+            <GlowingOrb color="#8b5cf6" size={250} mobileSize={120} />
           </div>
         </div>
 

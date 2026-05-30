@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 
 interface MagneticButtonProps {
@@ -9,6 +9,7 @@ interface MagneticButtonProps {
   variant?: 'cyan' | 'violet' | 'ghost';
   onClick?: () => void;
   size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
 }
 
 const variantStyles = {
@@ -50,18 +51,31 @@ export default function MagneticButton({
   variant = 'cyan',
   onClick,
   size = 'md',
+  disabled = false,
 }: MagneticButtonProps) {
   const ref = useRef<HTMLButtonElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 150, damping: 15 });
   const springY = useSpring(y, { stiffness: 150, damping: 15 });
 
+  useEffect(() => {
+    // Detect touch device to disable magnetic effect
+    const handleTouchDetection = () => {
+      const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      setIsTouchDevice(isTouch);
+    };
+    // Defer to avoid synchronous setState in effect
+    const timer = setTimeout(handleTouchDetection, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
   const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!ref.current) return;
+    if (isTouchDevice || !ref.current) return;
     const rect = ref.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
@@ -78,7 +92,7 @@ export default function MagneticButton({
   };
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    if (!ref.current) return;
+    if (!ref.current || disabled) return;
     const rect = ref.current.getBoundingClientRect();
     const rippleX = e.clientX - rect.left;
     const rippleY = e.clientY - rect.top;
@@ -103,9 +117,10 @@ export default function MagneticButton({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
+      disabled={disabled}
       style={{
-        x: springX,
-        y: springY,
+        x: isTouchDevice ? 0 : springX,
+        y: isTouchDevice ? 0 : springY,
         position: 'relative',
         overflow: 'hidden',
         background: isHovered ? style.hoverBg : style.bg,
@@ -115,21 +130,23 @@ export default function MagneticButton({
         backgroundImage: style.border,
         backgroundOrigin: 'border-box',
         backgroundClip: 'padding-box, border-box',
-        boxShadow: isHovered ? style.glow : 'none',
+        boxShadow: isHovered && !isTouchDevice ? style.glow : 'none',
         color: style.text,
         padding: sizeStyle.padding,
         fontSize: sizeStyle.fontSize,
         borderRadius: sizeStyle.borderRadius,
         fontWeight: 500,
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.5 : 1,
         transition: 'background 0.2s, box-shadow 0.3s',
+        // Ensure minimum touch target
+        minHeight: '44px',
       }}
       className={`inline-flex items-center justify-center gap-2 ${className}`}
       whileTap={{ scale: 0.97 }}
     >
       <span className="relative z-10 flex items-center gap-2">{children}</span>
 
-      {/* Ripple effects */}
       {ripples.map((ripple) => (
         <motion.span
           key={ripple.id}
@@ -147,7 +164,6 @@ export default function MagneticButton({
         />
       ))}
 
-      {/* Glow overlay on hover */}
       <motion.div
         className="absolute inset-0 rounded-[inherit] pointer-events-none"
         initial={{ opacity: 0 }}
