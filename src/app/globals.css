@@ -150,6 +150,27 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  /* Prevent text clipping at edges */
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  /* Ensure long words break properly */
+  .break-long-words {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+  }
+  /* Fix for flex children getting clipped */
+  .min-w-0 { min-width: 0; }
+  .min-h-0 { min-height: 0; }
+  /* Fix overflow in grid children */
+  .grid > * {
+    min-width: 0;
+    min-height: 0;
+  }
 }
 
 /* ============================================================

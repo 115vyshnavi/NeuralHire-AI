@@ -9,7 +9,8 @@ import AnimatedScore from '@/components/shared/AnimatedScore'
 import { useUserStore } from '@/lib/user-store'
 
 export default function CommandCenter() {
-  const { profile, analysis, hasProfile, hasAnalysis, setCurrentSection } = useUserStore()
+  const { profile, analysis, hasProfile, hasAnalysis, setCurrentSection, resetAnalysis, setProfile } = useUserStore()
+  const [showResetConfirm, setShowResetConfirm] = React.useState(false)
 
   if (!hasProfile()) {
     return (
@@ -214,7 +215,7 @@ export default function CommandCenter() {
               <div className="p-5 sm:p-8 text-center">
                 <h3 className="text-lg font-bold text-white mb-2">Ready to Begin Your Analysis?</h3>
                 <p className="text-gray-400 text-sm mb-6 max-w-md mx-auto">
-                  Upload your video resume to start the AI-powered analysis of your communication, confidence, and personality traits.
+                  Upload your video resume to start the AI-powered analysis. Our AI will validate that it's a genuine video resume before analyzing.
                 </p>
                 <MagneticButton variant="cyan" size="lg" onClick={() => setCurrentSection('analyze')}>
                   <Video className="w-5 h-5" />
@@ -222,6 +223,54 @@ export default function CommandCenter() {
                 </MagneticButton>
               </div>
             </GlassCard>
+          </motion.div>
+        )}
+
+        {/* Reset Data Section */}
+        {hasProfile() && (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }} className="mt-6">
+            <div
+              className="rounded-xl p-4"
+              style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.06)' }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-400">Reset All Data</p>
+                  <p className="text-xs text-gray-600">Clear profile and analysis to start fresh</p>
+                </div>
+                {!showResetConfirm ? (
+                  <button
+                    className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                    style={{ background: 'rgba(255, 107, 107, 0.08)', border: '1px solid rgba(255, 107, 107, 0.15)', color: '#ff6b6b' }}
+                    onClick={() => setShowResetConfirm(true)}
+                  >
+                    Reset
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'rgba(255, 107, 107, 0.15)', border: '1px solid rgba(255, 107, 107, 0.3)', color: '#ff6b6b' }}
+                      onClick={() => {
+                        resetAnalysis()
+                        setProfile({ name: '', email: '', role: '', location: '', bio: '', skills: [], experience: '', avatarUrl: null, isComplete: false })
+                        setCurrentSection('home')
+                        setShowResetConfirm(false)
+                      }}
+                    >
+                      Confirm Reset
+                    </button>
+                    <button
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium text-gray-400"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      onClick={() => setShowResetConfirm(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </motion.div>
         )}
       </div>

@@ -143,7 +143,7 @@ export default function DigitalProfile() {
 
   intelligencePanels.push({
     title: 'Emotional Intelligence Profile',
-    primaryTrait: hasAnalysis ? `${analysis.enthusiasm || 0 > 75 ? 'Empathic' : 'Analytical'} Professional` : 'Awaiting Analysis',
+    primaryTrait: hasAnalysis ? `${(analysis.enthusiasm || 0) > 75 ? 'Empathic' : 'Analytical'} Professional` : 'Awaiting Analysis',
     description: hasAnalysis
       ? `Demonstrates self-awareness and interpersonal sensitivity based on your analysis results. Emotional consistency score: ${analysis.emotionalConsistency || 'N/A'}.`
       : 'Complete a video analysis to assess emotional intelligence.',
@@ -167,7 +167,7 @@ export default function DigitalProfile() {
 
   intelligencePanels.push({
     title: 'Work Behavior Analysis',
-    primaryTrait: hasAnalysis ? `${analysis.leadership || 0 > 70 ? 'Growth-Oriented' : 'Steady'} Achiever` : 'Awaiting Analysis',
+    primaryTrait: hasAnalysis ? `${(analysis.leadership || 0) > 70 ? 'Growth-Oriented' : 'Steady'} Achiever` : 'Awaiting Analysis',
     description: hasAnalysis
       ? `Balances independent drive with collaborative instincts. Leadership score: ${analysis.leadership || 'N/A'}, Adaptability: ${analysis.adaptability || 'N/A'}.`
       : 'Complete a video analysis to assess work behavior.',

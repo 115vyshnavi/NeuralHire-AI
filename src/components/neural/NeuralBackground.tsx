@@ -92,6 +92,16 @@ interface FloatingOrb {
   blur: number;
 }
 
+interface AmbientParticle {
+  id: number;
+  left: string;
+  size: number;
+  duration: string;
+  delay: string;
+  opacity: number;
+  color: string;
+}
+
 const ORB_COLORS = [
   'rgba(0, 245, 255, 0.15)',  // cyan
   'rgba(108, 99, 255, 0.15)', // violet
@@ -102,12 +112,19 @@ const ORB_COLORS = [
 
 const ORB_ANIMATIONS = ['floatOrb1', 'floatOrb2', 'floatOrb3'];
 
+// Deterministic pseudo-random using seed (avoids hydration mismatch)
+function seededRandom(seed: number): number {
+  const x = Math.sin(seed * 9301 + 49297) * 233280;
+  return x - Math.floor(x);
+}
+
 export default function NeuralBackground({ children }: NeuralBackgroundProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isMouseIn, setIsMouseIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Generate floating orbs (reduced sizes for mobile)
+  // Generate floating orbs (static, deterministic — no hydration issue)
   const orbs: FloatingOrb[] = [
     { id: 0, color: ORB_COLORS[0], size: 300, top: '10%', left: '10%', animation: ORB_ANIMATIONS[0], duration: '20s', delay: '0s', blur: 80 },
     { id: 1, color: ORB_COLORS[1], size: 250, top: '60%', left: '60%', animation: ORB_ANIMATIONS[1], duration: '25s', delay: '-5s', blur: 70 },
@@ -116,19 +133,24 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
     { id: 4, color: ORB_COLORS[4], size: 200, top: '20%', left: '70%', animation: ORB_ANIMATIONS[1], duration: '28s', delay: '-8s', blur: 65 },
   ];
 
-  // Reduce particles on mobile for performance
-  const particleCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 12 : 25;
+  // Use deterministic particle generation to avoid hydration mismatch
+  // After mount, we can adjust count based on actual screen size
+  const particleCount = 25;
 
-  // Generate ambient floating particles
-  const particles = Array.from({ length: particleCount }, (_, i) => ({
+  // Generate ambient floating particles with deterministic positions
+  const particles: AmbientParticle[] = Array.from({ length: particleCount }, (_, i) => ({
     id: i,
-    left: `${Math.random() * 100}%`,
-    size: Math.random() * 3 + 1,
-    duration: `${Math.random() * 15 + 15}s`,
-    delay: `${Math.random() * -20}s`,
-    opacity: Math.random() * 0.5 + 0.2,
+    left: `${seededRandom(i * 7 + 1) * 100}%`,
+    size: seededRandom(i * 7 + 2) * 3 + 1,
+    duration: `${seededRandom(i * 7 + 3) * 15 + 15}s`,
+    delay: `${seededRandom(i * 7 + 4) * -20}s`,
+    opacity: seededRandom(i * 7 + 5) * 0.5 + 0.2,
     color: i % 2 === 0 ? '#00f5ff' : '#6c63ff',
   }));
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -213,14 +235,16 @@ export default function NeuralBackground({ children }: NeuralBackgroundProps) {
         }}
       />
 
-      {/* Mouse-reactive light effect */}
-      <div
-        className="pointer-events-none absolute inset-0 transition-opacity duration-500 max-w-full"
-        style={{
-          opacity: isMouseIn ? 1 : 0,
-          background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 245, 255, 0.06), transparent 40%)`,
-        }}
-      />
+      {/* Mouse-reactive light effect — only after hydration to avoid mismatch */}
+      {mounted && (
+        <div
+          className="pointer-events-none absolute inset-0 transition-opacity duration-500 max-w-full"
+          style={{
+            opacity: isMouseIn ? 1 : 0,
+            background: `radial-gradient(400px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 245, 255, 0.06), transparent 40%)`,
+          }}
+        />
+      )}
 
       {/* Ambient floating particles */}
       {particles.map((p) => (

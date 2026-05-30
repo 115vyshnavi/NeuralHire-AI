@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Send, Bot, User, Sparkles, Play } from 'lucide-react'
+import { Send, Bot, User, Sparkles, Play, Loader2, Target } from 'lucide-react'
 import GlassCard from '@/components/shared/GlassCard'
 import MagneticButton from '@/components/shared/MagneticButton'
 import { useUserStore } from '@/lib/user-store'
@@ -52,9 +52,124 @@ function LiveWaveform() {
   )
 }
 
-const initialQuestions = [
-  "Welcome to your NeuralHire AI interview. I'll be asking you a series of questions to understand your potential beyond what's on your resume. Tell me about a time when you had to lead a team through a challenging situation. How did you handle the pressure?",
-]
+function GeneratingOverlay({ profile }: { profile: { name?: string; skills?: string[]; role?: string } }) {
+  const skills = profile.skills || []
+  const role = profile.role || ''
+
+  return (
+    <div className="relative py-8 px-4 sm:px-6 lg:px-8">
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+        @keyframes pulseRing { 0% { transform: scale(0.8); opacity: 0.6; } 50% { transform: scale(1.2); opacity: 0.2; } 100% { transform: scale(0.8); opacity: 0.6; } }
+        @keyframes scanLine { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+      ` }} />
+      <motion.div className="text-center mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        <h2
+          className="text-3xl sm:text-4xl md:text-5xl font-bold mb-3"
+          style={{
+            background: 'linear-gradient(135deg, #00f5ff, #8b5cf6, #00f5ff)',
+            backgroundSize: '200% 200%',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            animation: 'gradientShift 4s ease-in-out infinite',
+          }}
+        >
+          Real-Time AI Interview
+        </h2>
+      </motion.div>
+
+      <div className="max-w-3xl mx-auto">
+        <GlassCard glowColor="#8b5cf6" tiltEnabled={false}>
+          <div className="p-8 sm:p-12 text-center">
+            {/* Animated AI brain */}
+            <div className="relative w-24 h-24 mx-auto mb-6">
+              {/* Pulse rings */}
+              <div className="absolute inset-0 rounded-full" style={{ border: '2px solid rgba(0, 245, 255, 0.2)', animation: 'pulseRing 2s ease-in-out infinite' }} />
+              <div className="absolute inset-0 rounded-full" style={{ border: '2px solid rgba(139, 92, 246, 0.2)', animation: 'pulseRing 2s ease-in-out infinite 0.5s' }} />
+              <div className="absolute inset-0 rounded-full" style={{ border: '2px solid rgba(0, 245, 255, 0.15)', animation: 'pulseRing 2s ease-in-out infinite 1s' }} />
+              {/* Core */}
+              <div className="w-24 h-24 rounded-full flex items-center justify-center relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(0, 245, 255, 0.12), rgba(139, 92, 246, 0.08))',
+                  border: '2px solid rgba(0, 245, 255, 0.25)',
+                }}
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+                >
+                  <Sparkles className="w-8 h-8" style={{ color: '#00f5ff' }} />
+                </motion.div>
+                {/* Scan line */}
+                <div className="absolute inset-0" style={{
+                  background: 'linear-gradient(transparent 40%, rgba(0, 245, 255, 0.08) 50%, transparent 60%)',
+                  animation: 'scanLine 2s linear infinite',
+                }} />
+              </div>
+            </div>
+
+            {/* Generating text */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <h3 className="text-xl font-bold text-white mb-2">Generating Personalized Questions...</h3>
+              <p className="text-gray-400 text-sm max-w-md mx-auto mb-4 leading-relaxed">
+                Our AI is analyzing your profile to craft interview questions tailored to your expertise
+              </p>
+            </motion.div>
+
+            {/* Profile analysis steps */}
+            <div className="max-w-xs mx-auto space-y-2 mb-4">
+              {[
+                { label: 'Scanning skills', detail: skills.length > 0 ? skills.slice(0, 3).join(', ') : 'Analyzing...', done: true },
+                { label: 'Detecting domain', detail: role || 'Professional', done: true },
+                { label: 'Crafting questions', detail: 'Personalizing...', done: false },
+              ].map((step, idx) => (
+                <motion.div
+                  key={step.label}
+                  className="flex items-center gap-3 px-4 py-2 rounded-lg"
+                  style={{ background: 'rgba(0, 245, 255, 0.03)', border: '1px solid rgba(0, 245, 255, 0.06)' }}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + idx * 0.3 }}
+                >
+                  {step.done ? (
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="#22c55e" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  ) : (
+                    <Loader2 className="w-5 h-5 flex-shrink-0 animate-spin" style={{ color: '#00f5ff' }} />
+                  )}
+                  <div className="text-left min-w-0 flex-1">
+                    <span className="text-xs font-medium block" style={{ color: 'rgba(255,255,255,0.7)' }}>{step.label}</span>
+                    <span className="text-[10px] block truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>{step.detail}</span>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Loading dots */}
+            <div className="flex items-center justify-center gap-1">
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="h-1 w-1 rounded-full"
+                  style={{ backgroundColor: '#8b5cf6' }}
+                  animate={{ y: [0, -4, 0], opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.2, ease: 'easeInOut' }}
+                />
+              ))}
+            </div>
+          </div>
+        </GlassCard>
+      </div>
+    </div>
+  )
+}
 
 function NoProfileScreen() {
   const { setCurrentSection } = useUserStore()
@@ -87,13 +202,69 @@ export default function AIInterview() {
   const [liveConfidence, setLiveConfidence] = useState(0)
   const [liveCommunication, setLiveCommunication] = useState(0)
   const [liveHesitation, setLiveHesitation] = useState(0)
+  const [liveNervousness, setLiveNervousness] = useState(0)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [detectedDomain, setDetectedDomain] = useState<string | null>(null)
+  const [domainEmoji, setDomainEmoji] = useState<string>('🎯')
+  const chatEndRef = useRef<HTMLDivElement>(null)
 
-  const startInterview = useCallback(() => {
-    const firstMsg = { role: 'ai' as const, text: initialQuestions[0] }
-    setMessages([firstMsg])
-    setInterviewStarted(true)
-    setAnalysis({ interviewMessages: [firstMsg] })
-  }, [setAnalysis])
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, isTyping])
+
+  const startInterview = useCallback(async () => {
+    setIsGenerating(true)
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'interview-start',
+          data: { profile },
+        }),
+      })
+      const result = await res.json()
+
+      if (result.success && result.interviewStart) {
+        const { openingQuestion, detectedDomain: domain, domainEmoji: emoji } = result.interviewStart
+        const firstMsg = { role: 'ai' as const, text: openingQuestion }
+        setMessages([firstMsg])
+        setInterviewStarted(true)
+        setDetectedDomain(domain)
+        setDomainEmoji(emoji || '🎯')
+        setAnalysis({ interviewMessages: [firstMsg] })
+      } else {
+        // Fallback: use a profile-aware generic question
+        const skills = profile.skills || []
+        const role = profile.role || ''
+        let fallbackQuestion = `Welcome to your NeuralHire AI interview, ${profile.name || 'candidate'}. I'll be asking you a series of questions to understand your potential beyond what's on your resume.`
+        if (skills.some(s => /react|vue|angular|frontend|fullstack/i.test(s))) {
+          fallbackQuestion += ` Given your frontend expertise, tell me about your approach to designing scalable component architectures. How do you decide between composition and inheritance when building a UI library?`
+        } else if (skills.some(s => /machine learning|ml|ai|data science|deep learning/i.test(s))) {
+          fallbackQuestion += ` With your data science background, walk me through how you would approach deploying an ML model from experimentation to production. What are the key pitfalls you'd watch for?`
+        } else if (/manager|director|lead|head|vp|chief/i.test(role)) {
+          fallbackQuestion += ` Given your leadership experience, tell me about a time when you had to navigate competing priorities from different stakeholders. How did you make the final call?`
+        } else {
+          fallbackQuestion += ` Tell me about a challenging project you've worked on recently. What made it challenging and how did you overcome those obstacles?`
+        }
+        const firstMsg = { role: 'ai' as const, text: fallbackQuestion }
+        setMessages([firstMsg])
+        setInterviewStarted(true)
+        setDetectedDomain(null)
+        setAnalysis({ interviewMessages: [firstMsg] })
+      }
+    } catch {
+      // Fallback on network error
+      const fallbackQuestion = `Welcome to your NeuralHire AI interview, ${profile.name || 'candidate'}. I'll be asking you a series of questions tailored to your background. To start, tell me about a project you're particularly proud of and what made it meaningful to you.`
+      const firstMsg = { role: 'ai' as const, text: fallbackQuestion }
+      setMessages([firstMsg])
+      setInterviewStarted(true)
+      setDetectedDomain(null)
+      setAnalysis({ interviewMessages: [firstMsg] })
+    }
+    setIsGenerating(false)
+  }, [profile, setAnalysis])
 
   const handleSend = useCallback(async () => {
     if (!inputValue.trim() || isTyping) return
@@ -116,12 +287,16 @@ export default function AIInterview() {
       const result = await res.json()
 
       if (result.success && result.interview) {
-        const { confidence, communication, hesitation, nextQuestion } = result.interview
+        const { confidence, communication, hesitation, nervousness, nextQuestion, detectedDomain: domain } = result.interview
         setLiveConfidence(confidence)
         setLiveCommunication(communication)
         setLiveHesitation(hesitation)
+        setLiveNervousness(nervousness || 0)
+        if (domain && !detectedDomain) {
+          setDetectedDomain(domain)
+        }
 
-        const aiMsg = { role: 'ai' as const, text: nextQuestion || "That's an interesting perspective. Can you tell me more?" }
+        const aiMsg = { role: 'ai' as const, text: nextQuestion || "That's an interesting perspective. Can you elaborate on that?" }
         const updatedMessages = [...newMessages, aiMsg]
         setMessages(updatedMessages)
         setAnalysis({
@@ -131,35 +306,36 @@ export default function AIInterview() {
           communication: communication,
         })
       } else {
-        const aiResponses = [
-          "That's a compelling example. How did that experience shape your approach to similar challenges?",
-          'Interesting perspective. Can you walk me through your decision-making process in that moment?',
-          'Your self-awareness is evident. How would you apply these insights in a new team environment?',
-        ]
-        const aiMsg = { role: 'ai' as const, text: aiResponses[Math.floor(Math.random() * aiResponses.length)] }
+        const aiMsg = { role: 'ai' as const, text: result.error || "I'm having trouble processing your response right now. Could you please try answering that again?" }
         const updatedMessages = [...newMessages, aiMsg]
         setMessages(updatedMessages)
         setAnalysis({ interviewMessages: updatedMessages })
       }
     } catch {
-      const aiMsg = { role: 'ai' as const, text: "Thank you for your response. Tell me about a time you had to adapt to a significant change at work." }
+      const aiMsg = { role: 'ai' as const, text: "I'm experiencing a connection issue. Please try sending your response again." }
       const updatedMessages = [...newMessages, aiMsg]
       setMessages(updatedMessages)
       setAnalysis({ interviewMessages: updatedMessages })
     }
 
     setIsTyping(false)
-  }, [inputValue, isTyping, messages, profile, setAnalysis])
+  }, [inputValue, isTyping, messages, profile, setAnalysis, detectedDomain])
 
   // If no profile, show guidance - AFTER all hooks
   if (!hasProfile()) {
     return <NoProfileScreen />
   }
 
+  // Generating personalized questions
+  if (isGenerating) {
+    return <GeneratingOverlay profile={profile} />
+  }
+
   // Start screen
   if (!interviewStarted) {
     return (
       <section className="relative py-8 px-4 sm:px-6 lg:px-8">
+        <style dangerouslySetInnerHTML={{ __html: `@keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }` }} />
         <div className="max-w-3xl mx-auto">
           <motion.div className="text-center mb-8" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <h2
@@ -191,10 +367,10 @@ export default function AIInterview() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Ready to Begin?</h3>
               <p className="text-gray-400 text-sm max-w-md mx-auto mb-6 leading-relaxed">
-                The AI interviewer will ask you behavioral and situational questions. Your responses will be analyzed in real-time for confidence, communication style, and personality indicators.
+                The AI interviewer will analyze your profile and craft personalized questions based on your expertise. Your responses will be analyzed in real-time for confidence, communication style, nervousness, and personality indicators.
               </p>
               <div className="flex flex-wrap gap-3 justify-center mb-6">
-                {['Behavioral Analysis', 'Real-time Scoring', 'Adaptive Questions'].map((item) => (
+                {['Profile-Aware Questions', 'Domain Detection', 'Real-time Scoring', 'Nervousness Tracking'].map((item) => (
                   <span key={item} className="px-3 py-1.5 rounded-lg text-xs font-medium"
                     style={{ background: 'rgba(139, 92, 246, 0.08)', border: '1px solid rgba(139, 92, 246, 0.2)', color: '#8b5cf6' }}
                   >
@@ -202,6 +378,25 @@ export default function AIInterview() {
                   </span>
                 ))}
               </div>
+              {profile.skills && profile.skills.length > 0 && (
+                <div className="mb-6">
+                  <p className="text-[10px] uppercase tracking-wider mb-2" style={{ color: 'rgba(0, 245, 255, 0.4)' }}>Your detected skills</p>
+                  <div className="flex flex-wrap gap-1.5 justify-center">
+                    {profile.skills.slice(0, 5).map((skill) => (
+                      <span key={skill} className="px-2 py-0.5 rounded text-[10px] font-medium"
+                        style={{ background: 'rgba(0, 245, 255, 0.06)', border: '1px solid rgba(0, 245, 255, 0.12)', color: 'rgba(0, 245, 255, 0.7)' }}
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                    {profile.skills.length > 5 && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-medium" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                        +{profile.skills.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
               <MagneticButton variant="cyan" size="lg" onClick={startInterview}>
                 <Sparkles className="w-5 h-5" />
                 Start Interview
@@ -209,11 +404,17 @@ export default function AIInterview() {
             </div>
           </GlassCard>
         </div>
-
-        <style dangerouslySetInnerHTML={{ __html: `@keyframes gradientShift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }` }} />
       </section>
     )
   }
+
+  // Nervousness color helper
+  const getNervousnessColor = (value: number) => {
+    if (value >= 60) return { bar: 'linear-gradient(90deg, #ef4444, #dc2626)', text: '#ef4444', bg: 'rgba(239, 68, 68, 0.06)', border: 'rgba(239, 68, 68, 0.1)', label: 'High' }
+    if (value >= 35) return { bar: 'linear-gradient(90deg, #f59e0b, #d97706)', text: '#f59e0b', bg: 'rgba(245, 158, 11, 0.06)', border: 'rgba(245, 158, 11, 0.1)', label: 'Moderate' }
+    return { bar: 'linear-gradient(90deg, #22c55e, #16a34a)', text: '#22c55e', bg: 'rgba(34, 197, 94, 0.06)', border: 'rgba(34, 197, 94, 0.1)', label: 'Low' }
+  }
+  const nervousnessStyle = getNervousnessColor(liveNervousness)
 
   return (
     <section className="relative py-8 px-4 sm:px-6 lg:px-8">
@@ -250,11 +451,29 @@ export default function AIInterview() {
                 </motion.div>
               </div>
               <div className="flex-1 min-w-0">
-                <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>NeuralHire AI</span>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e', animation: 'pulseOnline 2s ease-in-out infinite', boxShadow: '0 0 6px rgba(34, 197, 94, 0.5)' }} />
-                  <span className="text-[10px] font-medium" style={{ color: 'rgba(34, 197, 94, 0.8)' }}>Online</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.9)' }}>NeuralHire AI</span>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#22c55e', animation: 'pulseOnline 2s ease-in-out infinite', boxShadow: '0 0 6px rgba(34, 197, 94, 0.5)' }} />
+                    <span className="text-[10px] font-medium" style={{ color: 'rgba(34, 197, 94, 0.8)' }}>Online</span>
+                  </div>
                 </div>
+                {/* Domain Detected Badge */}
+                {detectedDomain && (
+                  <motion.div
+                    className="flex items-center gap-1 mt-0.5"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <Target size={10} style={{ color: '#f59e0b' }} />
+                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
+                      style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.15)', color: 'rgba(245, 158, 11, 0.85)' }}
+                    >
+                      {domainEmoji} {detectedDomain}
+                    </span>
+                  </motion.div>
+                )}
               </div>
             </div>
 
@@ -293,6 +512,7 @@ export default function AIInterview() {
                   </div>
                 </motion.div>
               )}
+              <div ref={chatEndRef} />
             </div>
 
             {/* Input */}
@@ -368,7 +588,7 @@ export default function AIInterview() {
               </div>
 
               {/* Hesitation */}
-              <div>
+              <div className="mb-4">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-medium" style={{ color: 'rgba(255, 107, 107, 0.7)' }}>Hesitation</span>
                   <span className="text-sm font-bold tabular-nums" style={{ color: liveHesitation > 25 ? '#ff6b6b' : '#fbbf24' }}>{liveHesitation}%</span>
@@ -377,6 +597,27 @@ export default function AIInterview() {
                   <motion.div className="h-full rounded-full"
                     style={{ background: liveHesitation > 25 ? 'linear-gradient(90deg, #ff6b6b, #ef4444)' : 'linear-gradient(90deg, #fbbf24, #f59e0b)' }}
                     initial={{ width: 0 }} animate={{ width: `${liveHesitation}%` }} transition={{ duration: 1 }}
+                  />
+                </div>
+              </div>
+
+              {/* Nervousness */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-medium" style={{ color: `${nervousnessStyle.text}aa` }}>Nervousness</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
+                      style={{ background: nervousnessStyle.bg, border: `1px solid ${nervousnessStyle.border}`, color: nervousnessStyle.text }}
+                    >
+                      {nervousnessStyle.label}
+                    </span>
+                    <span className="text-sm font-bold tabular-nums" style={{ color: nervousnessStyle.text }}>{liveNervousness}%</span>
+                  </div>
+                </div>
+                <div className="h-2 rounded-full overflow-hidden" style={{ background: nervousnessStyle.bg, border: `1px solid ${nervousnessStyle.border}` }}>
+                  <motion.div className="h-full rounded-full"
+                    style={{ background: nervousnessStyle.bar, boxShadow: `0 0 10px ${nervousnessStyle.text}40` }}
+                    initial={{ width: 0 }} animate={{ width: `${liveNervousness}%` }} transition={{ duration: 1 }}
                   />
                 </div>
               </div>

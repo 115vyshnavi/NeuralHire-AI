@@ -14,6 +14,9 @@ import EmotionalTimeline from '@/components/sections/EmotionalTimeline'
 import CareerPrediction from '@/components/sections/CareerPrediction'
 import CommandCenter from '@/components/sections/CommandCenter'
 import DigitalProfile from '@/components/sections/DigitalProfile'
+import SessionHistory from '@/components/sections/SessionHistory'
+import SkillAssessment from '@/components/sections/SkillAssessment'
+import InterviewScheduler from '@/components/sections/InterviewScheduler'
 import { useUserStore } from '@/lib/user-store'
 
 export default function Home() {
@@ -44,6 +47,12 @@ export default function Home() {
         return <CommandCenter />
       case 'digital-profile':
         return <DigitalProfile />
+      case 'history':
+        return <SessionHistory />
+      case 'skills':
+        return <SkillAssessment />
+      case 'schedule':
+        return <InterviewScheduler />
       default:
         return <LandingPage onNavigate={handleNavigate} />
     }

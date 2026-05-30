@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-import { User, Mail, Briefcase, MapPin, FileText, Tags, Clock, Sparkles, Edit3, Check } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { User, Mail, Briefcase, MapPin, FileText, Tags, Clock, Sparkles, Edit3, Check, Lock, LogIn, UserPlus, Globe, Eye, EyeOff, AlertCircle } from 'lucide-react'
 import GlassCard from '@/components/shared/GlassCard'
 import MagneticButton from '@/components/shared/MagneticButton'
 import HexagonalAvatar from '@/components/shared/HexagonalAvatar'
@@ -30,6 +30,12 @@ const itemVariants = {
 
 const experienceOptions = ['0-2', '3-5', '6-10', '10+']
 
+const languages = [
+  { code: 'en', label: 'EN' },
+  { code: 'hi', label: 'HI' },
+  { code: 'te', label: 'TE' },
+]
+
 function SkillTag({ skill, onRemove }: { skill: string; onRemove: () => void }) {
   return (
     <motion.span
@@ -50,9 +56,70 @@ function SkillTag({ skill, onRemove }: { skill: string; onRemove: () => void }) 
   )
 }
 
+// Language selector component
+function LanguageSelector() {
+  const { language, setLanguage } = useUserStore()
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: 0.1 }}
+      className="flex items-center justify-center gap-2 mb-6"
+    >
+      <Globe className="w-4 h-4 text-gray-400" />
+      {languages.map((lang) => (
+        <motion.button
+          key={lang.code}
+          onClick={() => setLanguage(lang.code)}
+          className="px-3 py-1 rounded-lg text-xs font-semibold transition-all"
+          style={{
+            background:
+              language === lang.code
+                ? 'rgba(0, 245, 255, 0.12)'
+                : 'rgba(255, 255, 255, 0.03)',
+            border: `1px solid ${
+              language === lang.code
+                ? 'rgba(0, 245, 255, 0.35)'
+                : 'rgba(255, 255, 255, 0.08)'
+            }`,
+            color: language === lang.code ? '#00f5ff' : 'rgba(255, 255, 255, 0.4)',
+            boxShadow:
+              language === lang.code
+                ? '0 0 10px rgba(0, 245, 255, 0.15)'
+                : 'none',
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {lang.label}
+        </motion.button>
+      ))}
+    </motion.div>
+  )
+}
+
 export default function CreateProfile() {
-  const { profile, setProfile, setCurrentSection } = useUserStore()
+  const {
+    profile,
+    setProfile,
+    setCurrentSection,
+    isLoggedIn,
+    authMode,
+    setAuthMode,
+    register,
+    login,
+    language,
+    setLanguage,
+  } = useUserStore()
+
   const [isEditing, setIsEditing] = useState(!profile.isComplete)
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [authLoading, setAuthLoading] = useState(false)
+
   const [formData, setFormData] = useState({
     name: profile.name,
     email: profile.email,
@@ -73,6 +140,39 @@ export default function CreateProfile() {
         return next
       })
     }
+  }
+
+  const handleAuthSubmit = async () => {
+    setAuthError('')
+    const newErrors: Record<string, string> = {}
+    if (!authEmail.trim()) newErrors.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail)) newErrors.email = 'Invalid email format'
+    if (!authPassword.trim()) newErrors.password = 'Password is required'
+    else if (authPassword.length < 4) newErrors.password = 'Password must be at least 4 characters'
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
+      return
+    }
+
+    setAuthLoading(true)
+
+    // Small delay for visual feedback
+    await new Promise((r) => setTimeout(r, 400))
+
+    if (authMode === 'signup') {
+      const result = register(authEmail.trim(), authPassword)
+      if (!result.success) {
+        setAuthError(result.error || 'Registration failed')
+      }
+    } else {
+      const result = login(authEmail.trim(), authPassword)
+      if (!result.success) {
+        setAuthError(result.error || 'Login failed')
+      }
+    }
+
+    setAuthLoading(false)
   }
 
   const handleSubmit = () => {
@@ -124,11 +224,325 @@ export default function CreateProfile() {
     resize: 'vertical' as const,
   })
 
-  // Show existing profile view if profile exists and not editing
+  const authInputStyle = (hasError: boolean) => ({
+    background: 'rgba(0, 245, 255, 0.03)',
+    border: `1px solid ${hasError ? 'rgba(255, 107, 107, 0.4)' : 'rgba(0, 245, 255, 0.12)'}`,
+    borderRadius: '12px',
+    padding: '12px 14px 12px 44px',
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontSize: '14px',
+    width: '100%',
+    outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
+  })
+
+  // ──────────────────────────────────────────────
+  // CASE 1: Not logged in → Show Auth form
+  // ──────────────────────────────────────────────
+  if (!isLoggedIn) {
+    return (
+      <section className="relative py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto">
+          {/* Language selector */}
+          <LanguageSelector />
+
+          {/* Header */}
+          <motion.div
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <motion.div
+              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4"
+              style={{
+                background: 'linear-gradient(135deg, rgba(0, 245, 255, 0.12), rgba(139, 92, 246, 0.12))',
+                border: '1px solid rgba(0, 245, 255, 0.2)',
+                boxShadow: '0 0 30px rgba(0, 245, 255, 0.1), 0 0 60px rgba(139, 92, 246, 0.08)',
+              }}
+              animate={{
+                boxShadow: [
+                  '0 0 20px rgba(0, 245, 255, 0.08), 0 0 40px rgba(139, 92, 246, 0.05)',
+                  '0 0 35px rgba(0, 245, 255, 0.18), 0 0 70px rgba(139, 92, 246, 0.12)',
+                  '0 0 20px rgba(0, 245, 255, 0.08), 0 0 40px rgba(139, 92, 246, 0.05)',
+                ],
+              }}
+              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              {authMode === 'login' ? (
+                <LogIn className="w-7 h-7" style={{ color: '#00f5ff' }} />
+              ) : (
+                <UserPlus className="w-7 h-7" style={{ color: '#8b5cf6' }} />
+              )}
+            </motion.div>
+            <h2
+              className="text-3xl sm:text-4xl font-bold mb-2"
+              style={{
+                background: 'linear-gradient(135deg, #00f5ff, #8b5cf6)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
+              {authMode === 'login' ? 'Welcome Back' : 'Join NeuralHire'}
+            </h2>
+            <p className="text-sm text-gray-400">
+              {authMode === 'login'
+                ? 'Sign in to continue your AI analysis'
+                : 'Create an account to get started'}
+            </p>
+          </motion.div>
+
+          {/* Auth Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+          >
+            <GlassCard
+              glowColor={authMode === 'login' ? '#00f5ff' : '#8b5cf6'}
+              tiltEnabled={false}
+            >
+              <div className="p-6 sm:p-8">
+                {/* Mode toggle tabs */}
+                <div
+                  className="flex rounded-xl p-1 mb-6"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                  }}
+                >
+                  <motion.button
+                    onClick={() => {
+                      setAuthMode('login')
+                      setAuthError('')
+                      setErrors({})
+                    }}
+                    className="flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    style={{
+                      background:
+                        authMode === 'login'
+                          ? 'rgba(0, 245, 255, 0.1)'
+                          : 'transparent',
+                      border: authMode === 'login'
+                        ? '1px solid rgba(0, 245, 255, 0.25)'
+                        : '1px solid transparent',
+                      color: authMode === 'login' ? '#00f5ff' : 'rgba(255, 255, 255, 0.4)',
+                      boxShadow: authMode === 'login'
+                        ? '0 0 12px rgba(0, 245, 255, 0.1)'
+                        : 'none',
+                    }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    Login
+                  </motion.button>
+                  <motion.button
+                    onClick={() => {
+                      setAuthMode('signup')
+                      setAuthError('')
+                      setErrors({})
+                    }}
+                    className="flex-1 py-2 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+                    style={{
+                      background:
+                        authMode === 'signup'
+                          ? 'rgba(139, 92, 246, 0.1)'
+                          : 'transparent',
+                      border: authMode === 'signup'
+                        ? '1px solid rgba(139, 92, 246, 0.25)'
+                        : '1px solid transparent',
+                      color: authMode === 'signup' ? '#8b5cf6' : 'rgba(255, 255, 255, 0.4)',
+                      boxShadow: authMode === 'signup'
+                        ? '0 0 12px rgba(139, 92, 246, 0.1)'
+                        : 'none',
+                    }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    Sign Up
+                  </motion.button>
+                </div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={authMode}
+                    initial={{ opacity: 0, x: authMode === 'login' ? -20 : 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: authMode === 'login' ? 20 : -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {/* Error message */}
+                    <AnimatePresence>
+                      {authError && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -8, height: 0 }}
+                          animate={{ opacity: 1, y: 0, height: 'auto' }}
+                          exit={{ opacity: 0, y: -8, height: 0 }}
+                          className="mb-4 flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm"
+                          style={{
+                            background: 'rgba(255, 107, 107, 0.08)',
+                            border: '1px solid rgba(255, 107, 107, 0.25)',
+                            color: '#ff6b6b',
+                          }}
+                        >
+                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          {authError}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Email field */}
+                    <div className="mb-4">
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Email</label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <input
+                          type="email"
+                          value={authEmail}
+                          onChange={(e) => {
+                            setAuthEmail(e.target.value)
+                            if (errors.email) setErrors((p) => { const n = { ...p }; delete n.email; return n })
+                          }}
+                          placeholder="your@email.com"
+                          style={authInputStyle(!!errors.email)}
+                          onFocus={(e) => (e.target.style.borderColor = 'rgba(0, 245, 255, 0.4)')}
+                          onBlur={(e) => (e.target.style.borderColor = errors.email ? 'rgba(255, 107, 107, 0.4)' : 'rgba(0, 245, 255, 0.12)')}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleAuthSubmit() }}
+                        />
+                      </div>
+                      {errors.email && <p className="text-xs mt-1" style={{ color: '#ff6b6b' }}>{errors.email}</p>}
+                    </div>
+
+                    {/* Password field */}
+                    <div className="mb-6">
+                      <label className="block text-xs font-medium text-gray-400 mb-1.5">Password</label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={authPassword}
+                          onChange={(e) => {
+                            setAuthPassword(e.target.value)
+                            if (errors.password) setErrors((p) => { const n = { ...p }; delete n.password; return n })
+                          }}
+                          placeholder={authMode === 'signup' ? 'Choose a password' : 'Enter your password'}
+                          style={{
+                            ...authInputStyle(!!errors.password),
+                            paddingRight: '44px',
+                          }}
+                          onFocus={(e) => (e.target.style.borderColor = 'rgba(0, 245, 255, 0.4)')}
+                          onBlur={(e) => (e.target.style.borderColor = errors.password ? 'rgba(255, 107, 107, 0.4)' : 'rgba(0, 245, 255, 0.12)')}
+                          onKeyDown={(e) => { if (e.key === 'Enter') handleAuthSubmit() }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                        >
+                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      {errors.password && <p className="text-xs mt-1" style={{ color: '#ff6b6b' }}>{errors.password}</p>}
+                    </div>
+
+                    {/* Submit button */}
+                    <MagneticButton
+                      variant={authMode === 'login' ? 'cyan' : 'violet'}
+                      size="lg"
+                      onClick={handleAuthSubmit}
+                    >
+                      {authLoading ? (
+                        <motion.div
+                          className="w-5 h-5 border-2 border-current border-t-transparent rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                        />
+                      ) : (
+                        <>
+                          {authMode === 'login' ? <LogIn className="w-5 h-5" /> : <UserPlus className="w-5 h-5" />}
+                          {authMode === 'login' ? 'Sign In' : 'Create Account'}
+                        </>
+                      )}
+                    </MagneticButton>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Toggle link */}
+                <motion.p className="text-center text-sm text-gray-500 mt-6">
+                  {authMode === 'login' ? (
+                    <>
+                      Don&apos;t have an account?{' '}
+                      <button
+                        onClick={() => {
+                          setAuthMode('signup')
+                          setAuthError('')
+                          setErrors({})
+                        }}
+                        className="font-medium transition-colors hover:underline"
+                        style={{ color: '#8b5cf6' }}
+                      >
+                        Sign Up
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      Already have an account?{' '}
+                      <button
+                        onClick={() => {
+                          setAuthMode('login')
+                          setAuthError('')
+                          setErrors({})
+                        }}
+                        className="font-medium transition-colors hover:underline"
+                        style={{ color: '#00f5ff' }}
+                      >
+                        Login
+                      </button>
+                    </>
+                  )}
+                </motion.p>
+              </div>
+            </GlassCard>
+          </motion.div>
+
+          {/* Decorative floating elements */}
+          <motion.div
+            className="absolute -top-8 -left-8 w-32 h-32 rounded-full pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle, rgba(0, 245, 255, 0.06), transparent 70%)',
+            }}
+            animate={{
+              scale: [1, 1.2, 1],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.div
+            className="absolute -bottom-8 -right-8 w-40 h-40 rounded-full pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle, rgba(139, 92, 246, 0.06), transparent 70%)',
+            }}
+            animate={{
+              scale: [1.2, 1, 1.2],
+              opacity: [0.3, 0.5, 0.3],
+            }}
+            transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        </div>
+      </section>
+    )
+  }
+
+  // ──────────────────────────────────────────────
+  // CASE 3: Logged in AND profile complete → Show profile view
+  // ──────────────────────────────────────────────
   if (profile.isComplete && !isEditing) {
     return (
       <section className="relative py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-2xl mx-auto">
+          {/* Language selector */}
+          <LanguageSelector />
+
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -198,9 +612,15 @@ export default function CreateProfile() {
     )
   }
 
+  // ──────────────────────────────────────────────
+  // CASE 2: Logged in but profile NOT complete → Show profile creation form
+  // ──────────────────────────────────────────────
   return (
     <section className="relative py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
+        {/* Language selector */}
+        <LanguageSelector />
+
         {/* Header */}
         <motion.div
           className="text-center mb-8"

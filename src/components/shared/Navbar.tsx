@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Brain } from 'lucide-react'
+import { Menu, X, Brain, RotateCcw, History, LogOut } from 'lucide-react'
 import { useUserStore } from '@/lib/user-store'
 
 interface NavbarProps {
@@ -16,6 +16,8 @@ const navLinks = [
   { id: 'analyze', label: 'Analyze' },
   { id: 'personality', label: 'Personality' },
   { id: 'interview', label: 'Interview' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'schedule', label: 'Schedule' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'predictions', label: 'Predictions' },
   { id: 'command', label: 'Command' },
@@ -24,11 +26,18 @@ const navLinks = [
 
 export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { hasProfile } = useUserStore()
+  const { hasProfile, resetSession } = useUserStore()
 
   const handleNavigate = (id: string) => {
     onNavigate(id)
     setMobileMenuOpen(false)
+  }
+
+  const handleReset = () => {
+    if (window.confirm('Start a new session? Your current data will be saved to history.')) {
+      resetSession()
+      setMobileMenuOpen(false)
+    }
   }
 
   return (
@@ -49,6 +58,7 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
+            {/* Logo */}
             <motion.div
               className="flex items-center gap-2 cursor-pointer"
               onClick={() => handleNavigate('home')}
@@ -68,6 +78,7 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
               </span>
             </motion.div>
 
+            {/* Desktop Nav Links */}
             <div className="hidden lg:flex items-center gap-1">
               {navLinks.map((link) => (
                 <NavLink
@@ -79,19 +90,58 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
               ))}
             </div>
 
-            <motion.button
-              className="lg:hidden relative p-2 rounded-lg"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              style={{ background: 'rgba(0, 245, 255, 0.08)', border: '1px solid rgba(0, 245, 255, 0.15)' }}
-            >
-              {mobileMenuOpen ? <X className="w-5 h-5 text-cyan-400" /> : <Menu className="w-5 h-5 text-cyan-400" />}
-            </motion.button>
+            {/* Right side: History + New Session */}
+            <div className="flex items-center gap-2">
+              {/* History Button */}
+              <motion.button
+                className="p-2 rounded-lg transition-colors duration-200"
+                onClick={() => handleNavigate('history')}
+                whileHover={{ scale: 1.08 }}
+                whileTap={{ scale: 0.92 }}
+                title="Session History"
+                style={{
+                  background: activeSection === 'history' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.06)',
+                  border: `1px solid ${activeSection === 'history' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.12)'}`,
+                }}
+              >
+                <History className="w-4 h-4" style={{ color: '#8b5cf6' }} />
+              </motion.button>
+
+              {/* New Session Button */}
+              {hasProfile() && (
+                <motion.button
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors duration-200"
+                  onClick={handleReset}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  title="New Session"
+                  style={{
+                    background: 'rgba(255, 107, 107, 0.08)',
+                    border: '1px solid rgba(255, 107, 107, 0.2)',
+                    color: '#ff6b6b',
+                  }}
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">New Session</span>
+                </motion.button>
+              )}
+
+              {/* Mobile menu button */}
+              <motion.button
+                className="lg:hidden relative p-2 rounded-lg"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{ background: 'rgba(0, 245, 255, 0.08)', border: '1px solid rgba(0, 245, 255, 0.15)' }}
+              >
+                {mobileMenuOpen ? <X className="w-5 h-5 text-cyan-400" /> : <Menu className="w-5 h-5 text-cyan-400" />}
+              </motion.button>
+            </div>
           </div>
         </div>
       </motion.nav>
 
+      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -140,6 +190,40 @@ export default function Navbar({ activeSection, onNavigate }: NavbarProps) {
                     )}
                   </motion.button>
                 ))}
+
+                {/* History in mobile menu */}
+                <motion.button
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: navLinks.length * 0.05 }}
+                  onClick={() => handleNavigate('history')}
+                  className={`relative px-4 py-3 rounded-xl text-left text-sm font-medium transition-all duration-200 ${
+                    activeSection === 'history' ? 'text-violet-400' : 'text-gray-400 hover:text-white'
+                  }`}
+                  style={{ background: activeSection === 'history' ? 'rgba(139, 92, 246, 0.1)' : 'transparent' }}
+                >
+                  <span className="flex items-center gap-2">
+                    <History className="w-4 h-4" />
+                    History
+                  </span>
+                </motion.button>
+
+                {/* Reset in mobile menu */}
+                {hasProfile() && (
+                  <motion.button
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: (navLinks.length + 1) * 0.05 }}
+                    onClick={handleReset}
+                    className="relative px-4 py-3 rounded-xl text-left text-sm font-medium text-red-400 hover:text-red-300 transition-all duration-200"
+                    style={{ background: 'rgba(255, 107, 107, 0.05)' }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <LogOut className="w-4 h-4" />
+                      New Session
+                    </span>
+                  </motion.button>
+                )}
               </div>
             </motion.div>
           </>
